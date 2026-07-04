@@ -3,7 +3,7 @@ import { UserRepository } from "../repository/user.repository";
 import { PasswordUtil } from "../utils/password.utils";
 import { JwtUtil } from "../utils/jwt.utils";
 import { HttpError } from "../errors/http.error";
-import bcrypt from "bcryptjs";
+
 
 
 const userRepository = new UserRepository();
@@ -66,8 +66,8 @@ export class UserService {
             }
         }
         if(data.password){
-            const hashedPassword = await bcrypt.hash(data.password, 10);
-            data.password = hashedPassword;
+            data.password = await PasswordUtil.hash(data.password);
+            
         }
         const updatedUser = await userRepository.updateOneUser(userId, data);
         return updatedUser;
@@ -103,3 +103,4 @@ export class UserService {
     };
   }
 }
+
