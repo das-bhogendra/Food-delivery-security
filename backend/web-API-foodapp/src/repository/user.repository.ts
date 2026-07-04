@@ -23,8 +23,8 @@ export class UserRepository implements IUserRepository {
   }
 
   async getUserByEmail(email: string): Promise<IUser | null> {
-    return await UserModel.findOne({ email });
-  }
+  return await UserModel.findOne({ email }).select("+password");
+}
 
   async getUserByUsername(username: string): Promise<IUser | null> {
     return await UserModel.findOne({ username });
@@ -38,7 +38,7 @@ export class UserRepository implements IUserRepository {
   async getAuthUser(identifier: string): Promise<IUser | null> {
     return await UserModel.findOne({
       $or: [{ email: identifier }, { username: identifier }],
-    });
+    }).select("+password");
   }
 
   async getUserById(id: string): Promise<IUser | null> {
