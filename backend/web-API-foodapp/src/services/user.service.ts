@@ -32,7 +32,7 @@ export class UserService {
       username: dto.username,
       email: dto.email,
       password: hashedPassword,
-      role: dto.role ?? "user",
+      role: "user",
       phoneNumber: dto.phoneNumber,
       profilePicture: dto.profilePicture,
     });
