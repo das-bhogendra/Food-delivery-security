@@ -28,7 +28,8 @@ const UserSchema = new Schema(
     password: {
       type: String,
       required: true,
-      minlength: 6,
+      minlength: 8,
+      select: false,
     },
 
     role: {
@@ -36,6 +37,21 @@ const UserSchema = new Schema(
       enum: ["admin", "user"],
       required: true,
       default: "user",
+    },
+
+    failedLoginAttempts: {
+      type: Number,
+      default: 0,
+    },
+
+   lockUntil: {
+     type: Date,
+     default: null,
+    },
+
+   lastLogin: {
+    type: Date,
+    default: null,
     },
 
     phoneNumber: {
