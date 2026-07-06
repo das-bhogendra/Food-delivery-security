@@ -76,33 +76,33 @@ export default function RegisterForm() {
     <form onSubmit={handleSubmit} className="space-y-4">
 
       {error && (
-        <div className="bg-red-50 text-red-600 text-sm p-3 rounded-lg text-center">
+        <div className="bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-300 text-sm p-3 rounded-lg text-center">
           {error}
         </div>
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">Full Name</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-zinc-200 mb-1.5">Full Name</label>
           <input
             type="text"
             placeholder="John Doe"
             value={fullName}
             onChange={(e) => setFullName(e.target.value)}
             disabled={loading}
-            className="w-full px-4 py-3 rounded-lg border border-gray-200 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
+            className="w-full px-4 py-3 rounded-lg border border-gray-200 bg-gray-50 dark:bg-zinc-900/50 dark:border-white/15 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all text-gray-900 dark:text-zinc-100"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">Username</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-zinc-200 mb-1.5">Username</label>
           <input
             type="text"
             placeholder="johndoe"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             disabled={loading}
-            className="w-full px-4 py-3 rounded-lg border border-gray-200 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
+            className="w-full px-4 py-3 rounded-lg border border-gray-200 bg-gray-50 dark:bg-zinc-900/50 dark:border-white/15 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all text-gray-900 dark:text-zinc-100"
           />
         </div>
       </div>
@@ -115,7 +115,7 @@ export default function RegisterForm() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           disabled={loading}
-          className="w-full px-4 py-3 rounded-lg border border-gray-200 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
+          className="w-full px-4 py-3 rounded-lg border border-gray-200 bg-gray-50 dark:bg-zinc-900/50 dark:border-white/15 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all text-gray-900 dark:text-zinc-100"
         />
       </div>
 
@@ -127,20 +127,20 @@ export default function RegisterForm() {
           value={phoneNumber}
           onChange={(e) => setPhoneNumber(e.target.value)}
           disabled={loading}
-          className="w-full px-4 py-3 rounded-lg border border-gray-200 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
+          className="w-full px-4 py-3 rounded-lg border border-gray-200 bg-gray-50 dark:bg-zinc-900/50 dark:border-white/15 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all text-gray-900 dark:text-zinc-100"
         />
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1.5">Password</label>
-          <input
+        <input
             type="password"
             placeholder="••••••••"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             disabled={loading}
-            className="w-full px-4 py-3 rounded-lg border border-gray-200 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
+            className="w-full px-4 py-3 rounded-lg border border-gray-200 bg-gray-50 dark:bg-zinc-900/50 dark:border-white/15 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all text-gray-900 dark:text-zinc-100"
           />
         </div>
 

@@ -34,7 +34,9 @@ export const CreateUserDto = z
         "Password must contain uppercase, lowercase, number and special character"
       ),
 
-    confirmPassword: z.string(),
+    confirmPassword: z
+      .string()
+      .min(8, "Confirm password is required"),
 
     phoneNumber: z
       .string()
@@ -51,17 +53,19 @@ export const CreateUserDto = z
     message: "Passwords do not match",
     path: ["confirmPassword"],
   });
+export type CreateUserDto = z.infer<typeof CreateUserDto>;
 
 export const UpdateUserDto = UserSchema.partial();
 export type UpdateUserDto = z.infer<typeof UpdateUserDto>;
 
 
 export const LoginUserDto = z.object({
-  email: z
+  identifier: z
     .string()
     .trim()
-    .toLowerCase()
-    .email("Please enter a valid email address"),
+    .min(3, "Email or username is required")
+    .max(100, "Email or username is too long"),
+
 
   password: z
     .string()
@@ -69,6 +73,8 @@ export const LoginUserDto = z.object({
 });
 
 export type LoginUserDto = z.infer<typeof LoginUserDto>;
+
+
 
 
 

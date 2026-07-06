@@ -5,8 +5,12 @@ export interface IUserRepository {
   getUserByUsername(username: string): Promise<IUser | null>;
   getUserByEmail(email: string): Promise<IUser | null>;
 
-  // 🔐 AUTH ONLY
+  
   getAuthUser(identifier: string): Promise<IUser | null>;
+  incrementFailedLoginAttempts(id: string): Promise<IUser | null>;
+  resetFailedLoginAttempts(id: string): Promise<IUser | null>;
+  updateLastLogin(id: string): Promise<IUser | null>;
+  lockAccount(id: string, lockUntil: Date): Promise<IUser | null>;
 
   getUserById(id: string): Promise<IUser | null>;
   getAllUsers(): Promise<IUser[]>;
@@ -30,17 +34,51 @@ export class UserRepository implements IUserRepository {
     return await UserModel.findOne({ username });
   }
 
-  /**
-   * AUTH QUERY
-   * - Allows login via username OR email
-   * - Includes password for bcrypt comparison
-   */
+  
   async getAuthUser(identifier: string): Promise<IUser | null> {
     return await UserModel.findOne({
       $or: [{ email: identifier }, { username: identifier }],
     }).select("+password");
   }
 
+  async incrementFailedLoginAttempts(id: string): Promise<IUser | null> {
+    return await UserModel.findByIdAndUpdate(
+      id,
+      { $inc: { failedLoginAttempts: 1 } },
+      { new: true }
+    );
+  }
+
+  async resetFailedLoginAttempts(id: string): Promise<IUser | null> {
+    return await UserModel.findByIdAndUpdate(
+      id,
+      {
+        failedLoginAttempts: 0,
+        lockUntil: null,
+      },
+      { new: true }
+    );
+  }
+
+  async updateLastLogin(id: string): Promise<IUser | null> {
+    return await UserModel.findByIdAndUpdate(
+      id,
+      {
+        lastLogin: new Date(),
+      },
+      { new: true }
+    );
+  }
+
+  async lockAccount(id: string, lockUntil: Date): Promise<IUser | null> {
+    return await UserModel.findByIdAndUpdate(
+      id,
+      {
+        lockUntil,
+      },
+      { new: true }
+    );
+  }
   async getUserById(id: string): Promise<IUser | null> {
     // Ensure we're using a valid ObjectId format
     console.log("[UserRepository] getUserById called with:", id);

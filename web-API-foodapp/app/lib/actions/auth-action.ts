@@ -47,10 +47,24 @@ export const handleLogin = async(formData: any)=>{
         }
 
         return { success: false, message: result.message || "Login failed" };
-    } catch(err:Error | any){
-        return{
-            sucess:false, message:err.message || "Login failed"
-        }
+    } catch(err: any){
+        // IMPORTANT: forward backend message exactly as received.
+        // Axios error shape: err.response?.data?.message (or err.response?.data)
+        const backendMessage = err?.response?.data?.message;
+        const backendMessageFallback = err?.response?.data?.message || err?.message;
+
+        // Extract backend message without modifying it.
+        const extractedMessage =
+          (typeof backendMessage === "string" && backendMessage) ||
+          (typeof backendMessageFallback === "string" && backendMessageFallback) ||
+          (typeof err?.message === "string" && err.message) ||
+          "";
+
+        return {
+          sucess: false,
+          // Guarantee `message` is always a string (never undefined).
+          message: extractedMessage || "Login failed",
+        };
     }
 }
 
