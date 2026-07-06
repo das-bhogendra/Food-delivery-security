@@ -26,6 +26,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const checkAuth = async () => {
         try {
             const userData = await whoAmI();
+            if (!userData) {
+                // avoid downstream crashes if backend returns 401/empty
+                setUser(null);
+                setIsAuthenticated(false);
+                return;
+            }
+
             if (userData) {
                 setUser(userData);
                 setIsAuthenticated(true);

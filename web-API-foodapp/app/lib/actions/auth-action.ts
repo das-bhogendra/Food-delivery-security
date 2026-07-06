@@ -20,7 +20,7 @@ export const handleRegister = async(formData: any)=>{
         }
     } catch(err:Error | any){
         return{
-            sucess:false, message:err.message || "Registration failed"
+            success:false, message:err.message || "Registration failed"
         }
     }
 }
@@ -35,15 +35,15 @@ export const handleLogin = async(formData: any)=>{
         if (user) {
             try {
                 await setUserData(user);
+                if (token) {
+                    await setAuthToken(token);
+                }
             } catch (e) {
                 // ignore cookie set errors
             }
-            if (token) {
-                try {
-                    await setAuthToken(token);
-                } catch (e) {}
-            }
             return { success: true, message: "Login successful", data: user, token };
+
+
         }
 
         return { success: false, message: result.message || "Login failed" };
@@ -61,7 +61,7 @@ export const handleLogin = async(formData: any)=>{
           "";
 
         return {
-          sucess: false,
+          success: false,
           // Guarantee `message` is always a string (never undefined).
           message: extractedMessage || "Login failed",
         };

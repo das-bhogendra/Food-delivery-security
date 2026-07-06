@@ -37,7 +37,12 @@ export const whoAmI = async () => {
   try {
     const response = await axios.get(API.AUTH.WHOAMI, {
       withCredentials: true, // important to send cookie
+      headers: {
+        // Some setups may rely on Authorization header instead of cookies
+        // (cookie name is auth_token)
+      },
     });
+
     // API returns { success: true, data: { id, email, name, role, ... } }
     // So we need to return response.data.data
     return response.data.data;

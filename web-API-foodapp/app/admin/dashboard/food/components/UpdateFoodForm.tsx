@@ -24,8 +24,8 @@ export default function UpdateFoodForm({ food, onSuccess }: Props) {
   // ✅ Image Preview
   const [preview, setPreview] = useState<string>(
     food.imageUrl
-      ? `${process.env.NEXT_PUBLIC_API_URL}${food.imageUrl}`
-      : "/Food_photos/placeholder_food.jpg"
+      ? food.imageUrl // backend already returns absolute URL
+      : "/public/food_photos/placeholder_food.jpg"
   );
 
   const handleChange = (e: any) => {
