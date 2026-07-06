@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import cors from "cors";
 import path from "path";
 import cookieParser from "cookie-parser";
+import helmet from "helmet";
 
 import authRoutes from "./routes/auth.route";
 import adminUserRoutes from "./routes/admin/user.routes";
@@ -14,17 +15,14 @@ import foodRoutes from "./routes/food.routes";
 import { connectionDatabase } from "./database/mongodb";
 import paymentRoutes from "./routes/payment.routes";
 
+
 dotenv.config();
 
 const app: Application = express();
 
-// ⭐ Use PORT from .env or fallback
 const PORT = process.env.PORT || 5005;
 
-// =======================
-// MIDDLEWARES
-// =======================
-
+app.use(helmet());
 // Parse JSON body
 app.use(express.json({ limit: "10mb" }));
 app.use(cookieParser());
@@ -93,3 +91,5 @@ async function start() {
 }
 
 start();
+
+
