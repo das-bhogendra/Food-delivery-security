@@ -1,16 +1,18 @@
 
 import { Request, Response } from "express";
 
-import jwt from "jsonwebtoken";
 import z from "zod";
 import { UserService } from "../services/user.service";
 import { CreateUserDto, LoginUserDto, UpdateUserDto } from "../dtos/user.dto";
+import { JwtUtil } from "../utils/jwt.utils";
+
 
 const userService = new UserService();
 
 export class AuthController {
 
   async register(req: Request, res: Response) {
+
     try {
       const parsedData = CreateUserDto.safeParse(req.body);
       if (!parsedData.success) {
@@ -22,19 +24,16 @@ export class AuthController {
 
       const newUser = await userService.registerUser(parsedData.data);
 
-      const token = jwt.sign(
-        { userId: newUser._id, role: newUser.role },
-        process.env.JWT_SECRET!,
-        { expiresIn: "7d" }
-      );
+      const token = JwtUtil.sign({ id: newUser._id, role: newUser.role });
 
-      res.cookie("authToken", token, {
+      res.cookie("auth_token", token, {
         httpOnly: true,
         sameSite: "lax",
         secure: false, // true in production
         path: "/",
         maxAge: 7 * 24 * 60 * 60 * 1000,
       });
+
 
       const { password, ...safeUser } = newUser.toObject();
 
@@ -67,13 +66,14 @@ export class AuthController {
 
       const { password, ...safeUser } = user;
 
-      res.cookie("authToken", token, {
+      res.cookie("auth_token", token, {
         httpOnly: true,
         sameSite: "lax",
         secure: false, // true in production
         path: "/",
         maxAge: 7 * 24 * 60 * 60 * 1000,
       });
+
 
       return res.status(200).json({
         success: true,

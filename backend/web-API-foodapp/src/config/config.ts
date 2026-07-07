@@ -18,6 +18,6 @@ export const JWT_SECRET: string =
 // Optional: debug to make sure env is loaded
 console.log("Loaded config:");
 console.log("PORT:", PORT);
-console.log("MONGODB_URI:", MONGODB_URI ? "✅ Loaded" : "❌ Undefined");
-console.log("JWT_SECRET:", JWT_SECRET ? "✅ Loaded" : "❌ Undefined");
+console.log("MONGODB_URI:", MONGODB_URI ? "✅ Loaded" : "Undefined");
+console.log("JWT_SECRET:", JWT_SECRET ? "✅ Loaded" : "Undefined");
 

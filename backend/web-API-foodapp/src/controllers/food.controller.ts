@@ -26,11 +26,13 @@ export const createFoodItem = async (req: Request, res: Response) => {
     console.log("REQ FILE:", req.file);
 
     // Priority: uploaded file > body.imageUrl > default image
+    // Return an absolute URL for consistent frontend rendering.
     const imageUrl: string = req.file
       ? `${req.protocol}://${req.get("host")}/public/food_photos/${req.file.filename}`
       : req.body.imageUrl
       ? req.body.imageUrl
       : getDefaultImageUrl(req);
+
 
     const dto: CreateFoodItemDto = {
       ...req.body,
@@ -96,6 +98,7 @@ export const updateFoodItem = async (req: Request, res: Response) => {
 
     // Priority: uploaded file > body.imageUrl > default image
     if (req.file) {
+      // Always return absolute URL after upload
       dto.imageUrl = `${req.protocol}://${req.get("host")}/public/food_photos/${req.file.filename}`;
     } else if (req.body.imageUrl) {
       dto.imageUrl = req.body.imageUrl;

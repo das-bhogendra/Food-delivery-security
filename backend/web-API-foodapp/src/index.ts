@@ -22,20 +22,34 @@ const app: Application = express();
 
 const PORT = process.env.PORT || 5005;
 
-app.use(helmet());
-// Parse JSON body
-app.use(express.json({ limit: "10mb" }));
-app.use(cookieParser());
+function normalizePort(value: unknown): number {
+  if (typeof value === "number") return value;
+  const n = Number(value);
+  return Number.isFinite(n) ? n : 5005;
+}
+
+const effectivePort = normalizePort(process.env.PORT);
+
+
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+  })
+);
 
 app.use(
   cors({
     origin: ["http://localhost:3000", "http://localhost:3001"],
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
+    allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
+    optionsSuccessStatus: 200,
   })
 );
-// =======================
-// STATIC FILES
-// =======================
+// Parse JSON body
+app.use(express.json({ limit: "10mb" }));
+app.use(cookieParser());
+
 
 // Serve public folder
 app.use("/public", express.static(path.join(__dirname, "../public")));
@@ -81,8 +95,19 @@ async function start() {
     await connectionDatabase();
     console.log("✅ MongoDB connected");
 
-    app.listen(PORT, () => {
-      console.log(`✅ Server running at http://localhost:${PORT}`);
+    const server = app.listen(effectivePort, () => {
+      console.log(`✅ Server running at http://localhost:${effectivePort}`);
+    });
+
+    server.on("error", (err: any) => {
+      if (err?.code === "EADDRINUSE") {
+        console.error(
+          `❌ Port ${effectivePort} is already in use. Stop the other server or set PORT in .env to a free value.`
+        );
+      } else {
+        console.error("❌ Server listen error:", err);
+      }
+      process.exit(1);
     });
   } catch (error) {
     console.error("❌ Server failed to start:", error);
@@ -91,5 +116,6 @@ async function start() {
 }
 
 start();
+
 
 
