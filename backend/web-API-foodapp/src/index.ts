@@ -16,6 +16,11 @@ import foodRoutes from "./routes/food.routes";
 import { connectionDatabase } from "./database/mongodb";
 import paymentRoutes from "./routes/payment.routes";
 
+import csrfRoutes from "./routes/csrf.route";
+import {
+  doubleCsrfProtection,
+} from "./middlewares/csrf.middleware";
+
 
 dotenv.config();
 
@@ -71,6 +76,10 @@ app.use(
 );
 app.use(cookieParser());
 
+app.use("/api/csrf", csrfRoutes);
+
+// Apply CSRF protection AFTER the token route
+app.use(doubleCsrfProtection);
 
 // Serve public folder
 app.use("/public", express.static(path.join(__dirname, "../public")));
@@ -137,6 +146,7 @@ async function start() {
 }
 
 start();
+
 
 
 
