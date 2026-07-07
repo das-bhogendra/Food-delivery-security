@@ -6,13 +6,15 @@ import path from "path";
 
 export class FoodItemService {
   // ================= CREATE =================
-  async createFoodItem(dto: CreateFoodItemDto): Promise<IFoodItem> {
-    const foodItem = await FoodItem.create({
-      ...dto,
-      addedBy: new mongoose.Types.ObjectId(dto.addedBy), // ensure ObjectId
-    });
-    return foodItem;
-  }
+  async createFoodItem(
+  dto: CreateFoodItemDto,
+  userId: string
+): Promise<IFoodItem> {
+  return await FoodItem.create({
+    ...dto,
+    addedBy: new mongoose.Types.ObjectId(userId),
+  });
+}
 
   // ================= GET =================
   async getAllFoodItems(): Promise<IFoodItem[]> {

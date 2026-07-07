@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { CategoryService } from "../services/category.service";
-import { CreateCategoryDto, UpdateCategoryDto } from "../dtos/category.dto";
+import { CreateCategoryDto, UpdateCategoryDto,CreateCategorySchema,UpdateCategorySchema } from "../dtos/category.dto";
 
 const service = new CategoryService();
 
@@ -12,8 +12,18 @@ export const createCategory = async (req: Request, res: Response) => {
     if (!userId) {
       return res.status(401).json({ success: false, message: "Unauthorized" });
     }
+    console.log("Request body:", req.body);
+    const parsed = CreateCategorySchema.safeParse(req.body);
+    console.log("Validation:", parsed);
 
-    const dto: CreateCategoryDto = req.body;
+   if (!parsed.success) {
+    return res.status(400).json({
+      success: false,
+      message: parsed.error.issues,
+    });
+  }
+
+    const dto: CreateCategoryDto = parsed.data;
     const category = await service.createCategory(dto, userId);
 
     res.status(201).json({
@@ -65,14 +75,21 @@ export const getCategoriesByUser = async (req: Request, res: Response) => {
 export const updateCategory = async (req: Request, res: Response) => {
   try {
     const id = req.params.id;
-    const dto: UpdateCategoryDto = req.body;
+    const parsed = UpdateCategorySchema.safeParse(req.body);
+    if (!parsed.success) {
+    return res.status(400).json({
+      success:false,
+      message: parsed.error.issues
+   });
+  }
+    const dto: UpdateCategoryDto = parsed.data;
 
     const category = await service.updateCategory(id, dto); // Pass id and dto separately
 
     if (!category) {
       return res.status(404).json({ success: false, message: "Category not found" });
     }
-
+    
     res.status(200).json({
       success: true,
       message: "Category updated successfully",

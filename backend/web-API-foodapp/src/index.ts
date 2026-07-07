@@ -4,6 +4,7 @@ import cors from "cors";
 import path from "path";
 import cookieParser from "cookie-parser";
 import helmet from "helmet";
+import mongoSanitize from "express-mongo-sanitize";
 
 import authRoutes from "./routes/auth.route";
 import adminUserRoutes from "./routes/admin/user.routes";
@@ -33,7 +34,22 @@ const effectivePort = normalizePort(process.env.PORT);
 
 app.use(
   helmet({
-    crossOriginResourcePolicy: { policy: "cross-origin" },
+    crossOriginResourcePolicy: {
+      policy: "cross-origin",
+    },
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        imgSrc: ["'self'", "data:", "https:"],
+        connectSrc: ["'self'", "http://localhost:3000", "http://localhost:3001"],
+        objectSrc: ["'none'"],
+        frameAncestors: ["'none'"],
+        baseUri: ["'self'"],
+        formAction: ["'self'"],
+      },
+    },
   })
 );
 
@@ -48,6 +64,11 @@ app.use(
 );
 // Parse JSON body
 app.use(express.json({ limit: "10mb" }));
+app.use(
+  mongoSanitize({
+    replaceWith: "_",
+  })
+);
 app.use(cookieParser());
 
 
@@ -67,10 +88,10 @@ app.use("/api/auth", authRoutes);
 // Admin user routes
 app.use("/api/admin/users", adminUserRoutes);
 
-// ✅ Category routes
+// Category routes
 app.use("/api/categories", categoryRoutes);
 
-// ✅ Order routes
+// Order routes
 app.use("/api/orders", orderRoutes);
 
 app.use("/api/fooditems", foodRoutes);
@@ -93,24 +114,24 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
 async function start() {
   try {
     await connectionDatabase();
-    console.log("✅ MongoDB connected");
+    console.log(" MongoDB connected");
 
     const server = app.listen(effectivePort, () => {
-      console.log(`✅ Server running at http://localhost:${effectivePort}`);
+      console.log(` Server running at http://localhost:${effectivePort}`);
     });
 
     server.on("error", (err: any) => {
       if (err?.code === "EADDRINUSE") {
         console.error(
-          `❌ Port ${effectivePort} is already in use. Stop the other server or set PORT in .env to a free value.`
+          ` Port ${effectivePort} is already in use. Stop the other server or set PORT in .env to a free value.`
         );
       } else {
-        console.error("❌ Server listen error:", err);
+        console.error(" Server listen error:", err);
       }
       process.exit(1);
     });
   } catch (error) {
-    console.error("❌ Server failed to start:", error);
+    console.error(" Server failed to start:", error);
     process.exit(1);
   }
 }

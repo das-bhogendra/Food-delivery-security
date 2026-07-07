@@ -3,10 +3,14 @@ import { FoodItem } from "../models/food.model";
 import { CreateFoodItemDto, UpdateFoodItemDto } from "../dtos/food.dto";
 
 export class FoodItemRepository {
-  async create(dto: CreateFoodItemDto) {
-    const data = { ...dto, addedBy: new mongoose.Types.ObjectId(dto.addedBy) };
-    return await FoodItem.create(data);
-  }
+  async create(dto: CreateFoodItemDto, userId: string) {
+  const data = {
+    ...dto,
+    addedBy: new mongoose.Types.ObjectId(userId),
+  };
+
+  return await FoodItem.create(data);
+}
 
   async findAll() {
     return await FoodItem.find().sort({ createdAt: -1 });

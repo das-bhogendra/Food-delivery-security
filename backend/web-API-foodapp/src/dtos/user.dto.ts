@@ -1,13 +1,19 @@
 import { z } from "zod";
 import { UserSchema } from "../types/user.type";
-
+const containsHtml = (value: string) => /<[^>]*>/.test(value);
 export const CreateUserDto = z
   .object({
     fullName: z
       .string()
       .trim()
       .min(3, "Full name must be at least 3 characters")
-      .max(100, "Full name is too long"),
+      .max(100, "Full name is too long")
+      .refine(
+       (value) => !containsHtml(value),
+       {
+        message: "HTML tags are not allowed in full name",
+       }
+  ),
 
     username: z
       .string()
@@ -17,6 +23,12 @@ export const CreateUserDto = z
       .regex(
         /^[a-zA-Z0-9_]+$/,
         "Username can contain only letters, numbers and underscores"
+      )
+      .refine(
+      (value) => !containsHtml(value),
+      {
+        message: "HTML tags are not allowed",
+      }
       ),
 
     email: z
@@ -59,6 +71,7 @@ export const UpdateUserDto = UserSchema.partial();
 export type UpdateUserDto = z.infer<typeof UpdateUserDto>;
 
 
+
 export const LoginUserDto = z.object({
   identifier: z
     .string()
@@ -73,6 +86,8 @@ export const LoginUserDto = z.object({
 });
 
 export type LoginUserDto = z.infer<typeof LoginUserDto>;
+
+
 
 
 

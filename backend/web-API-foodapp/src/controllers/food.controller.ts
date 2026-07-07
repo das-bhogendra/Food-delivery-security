@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { FoodItemService } from "../services/food.service";
-import { CreateFoodItemDto, UpdateFoodItemDto } from "../dtos/food.dto";
+import { CreateFoodItemDto, UpdateFoodItemDto,CreateFoodItemSchema,UpdateFoodItemSchema} from "../dtos/food.dto";
 
 const service = new FoodItemService();
 
@@ -24,6 +24,22 @@ export const createFoodItem = async (req: Request, res: Response) => {
     // Debugging
     console.log("REQ BODY:", req.body);
     console.log("REQ FILE:", req.file);
+    console.log("Headers:", req.headers["content-type"]);
+    console.log("Body:", req.body);
+    console.log("Price:", req.body.price, typeof req.body.price);
+    console.log("isAvailable:", req.body.isAvailable, typeof req.body.isAvailable);
+    console.log("isBestSeller:", req.body.isBestSeller, typeof req.body.isBestSeller);
+    console.log("isDiscounted:", req.body.isDiscounted, typeof req.body.isDiscounted);
+    console.log("=================================");
+
+     const parsed = CreateFoodItemSchema.safeParse(req.body);
+
+    if (!parsed.success) {
+      return res.status(400).json({
+        success: false,
+        message: parsed.error.issues,
+      });
+    }
 
     // Priority: uploaded file > body.imageUrl > default image
     // Return an absolute URL for consistent frontend rendering.
@@ -40,7 +56,7 @@ export const createFoodItem = async (req: Request, res: Response) => {
       imageUrl,
     };
 
-    const foodItem = await service.createFoodItem(dto);
+    const foodItem = await service.createFoodItem(dto, userId.toString());
 
     return res.status(201).json({
       success: true,
@@ -92,6 +108,14 @@ export const getFoodItemsByType = async (req: Request, res: Response) => {
 export const updateFoodItem = async (req: Request, res: Response) => {
   try {
     const dto: UpdateFoodItemDto = { ...req.body };
+     const parsed = UpdateFoodItemSchema.safeParse(req.body);
+
+    if (!parsed.success) {
+      return res.status(400).json({
+        success: false,
+        message: parsed.error.issues,
+      });
+    }
 
     // Ensure client cannot change 'addedBy'
     if ("addedBy" in dto) delete dto.addedBy;

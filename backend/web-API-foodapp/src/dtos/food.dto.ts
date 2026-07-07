@@ -1,38 +1,90 @@
-// src/dtos/food.dto.ts
+import { z } from "zod";
 
 export type FoodItemType = "veg" | "nonVeg" | "drink" | "dessert";
-export type MediaType = "photo" | "video"; // ✅ added
+export type MediaType = "photo" | "video";
 
-// ================= CREATE DTO =================
-export interface CreateFoodItemDto {
-  name: string;
-  description?: string;
-  type: FoodItemType;
-  price: number;
-  imageUrl?: string;
+// ================= XSS CHECK =================
+const containsHtml = (value: string) => /<[^>]*>/i.test(value);
 
-  mediaType?: MediaType; // ✅ added (photo/video)
+// ================= CREATE SCHEMA =================
+export const CreateFoodItemSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(2, "Food name must be at least 2 characters")
+    .max(100, "Food name cannot exceed 100 characters")
+    .refine((value) => !containsHtml(value), {
+      message: "HTML tags are not allowed",
+    }),
 
-  isAvailable?: boolean; // default true
+  description: z
+    .string()
+    .trim()
+    .max(1000, "Description cannot exceed 1000 characters")
+    .refine((value) => !containsHtml(value), {
+      message: "HTML tags are not allowed",
+    })
+    .optional(),
 
-  isBestSeller?: boolean; // ✅ added (default false)
-  isDiscounted?: boolean; // ✅ added (default false)
+  type: z.enum(["veg", "nonVeg", "drink", "dessert"]),
 
-  addedBy: string; // userId as string
-}
+  price: z.preprocess(
+    (value) => {
+      if (typeof value === "number") return value;
+      if (typeof value === "string" && value.trim() !== "") {
+        const n = Number(value);
+        return Number.isNaN(n) ? value : n;
+      }
+      return value;
+    },
+    z.number().positive("Price must be greater than 0")
+  ),
 
-// ================= UPDATE DTO =================
-export interface UpdateFoodItemDto {
-  name?: string;
-  description?: string;
-  type?: FoodItemType;
-  price?: number;
-  imageUrl?: string;
 
-  mediaType?: MediaType; // ✅ added
+  imageUrl: z
+    .string()
+    .url("Invalid image URL")
+    .optional(),
 
-  isAvailable?: boolean;
+  mediaType: z
+    .enum(["photo", "video"])
+    .optional(),
 
-  isBestSeller?: boolean; // ✅ added
-  isDiscounted?: boolean; // ✅ added
-}
+  isAvailable: z
+    .preprocess((value) => {
+      if (typeof value === "boolean") return value;
+      if (typeof value === "string") return value === "true";
+      return value;
+    }, z.boolean())
+    .optional(),
+
+
+  isBestSeller: z
+    .preprocess((value) => {
+      if (typeof value === "boolean") return value;
+      if (typeof value === "string") return value === "true";
+      return value;
+    }, z.boolean())
+    .optional(),
+
+
+  isDiscounted: z
+    .preprocess((value) => {
+      if (typeof value === "boolean") return value;
+      if (typeof value === "string") return value === "true";
+      return value;
+    }, z.boolean())
+    .optional(),
+
+});
+
+// ================= UPDATE SCHEMA =================
+export const UpdateFoodItemSchema =
+  CreateFoodItemSchema.partial();
+
+// ================= DTO TYPES =================
+export type CreateFoodItemDto =
+  z.infer<typeof CreateFoodItemSchema>;
+
+export type UpdateFoodItemDto =
+  z.infer<typeof UpdateFoodItemSchema>;
