@@ -40,7 +40,7 @@ const ProfilePageInner = () => {
         </svg>
         Back to Dashboard
       </button>
-      <h1 className="text-3xl font-bold mb-6">My Profile</h1>
+      <h1 className="text-3xl font-bold mb-6 text-gray-900">My Profile</h1>
 
       {/* Tabs */}
       <div className="flex border-b mb-6">

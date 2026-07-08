@@ -1,97 +1,133 @@
-"use server"
+"use server";
 
-import { success } from "zod";
-import {loginUser, registerUser, updateProfile} from "../api/auth";
-import { setUserData, setAuthToken } from "../cookie";
-export const handleRegister = async(formData: any)=>{
-    try{
-        const result = await registerUser(formData);
-        //handle how to send data back to component
-        if(result.success){
-            return{
-                success:true,
-                message: "Registration sucessful",
-                data: result.data
-            };
-        }
-        return{
-            success: false,
-            message:result.message || "registration failed"
-        }
-    } catch(err:Error | any){
-        return{
-            success:false, message:err.message || "Registration failed"
-        }
+import { cookies } from "next/headers";
+import {
+  loginUser,
+  registerUser,
+  updateProfile,
+} from "../api/auth";
+import {
+  setAuthToken,
+  setUserData,
+} from "../cookie";
+
+/**
+ * Register User
+ */
+export const handleRegister = async (formData: any) => {
+  try {
+    const result = await registerUser(formData);
+
+    if (!result.success) {
+      return {
+        success: false,
+        message: result.message || "Registration failed",
+      };
     }
-}
 
-export const handleLogin = async(formData: any)=>{
-    try{
-        const result = await loginUser(formData);
-        // Normalize possible backend shapes: { user, token } or { data: { user, token } } or { data: user }
-        const user = result.user || result.data?.user || result.data || null;
-        const token = result.token || result.data?.token || null;
-
-        if (user) {
-            try {
-                await setUserData(user);
-                if (token) {
-                    await setAuthToken(token);
-                }
-            } catch (e) {
-                // ignore cookie set errors
-            }
-            return { success: true, message: "Login successful", data: user, token };
-
-
-        }
-
-        return { success: false, message: result.message || "Login failed" };
-    } catch(err: any){
-        // IMPORTANT: forward backend message exactly as received.
-        // Axios error shape: err.response?.data?.message (or err.response?.data)
-        const backendMessage = err?.response?.data?.message;
-        const backendMessageFallback = err?.response?.data?.message || err?.message;
-
-        // Extract backend message without modifying it.
-        const extractedMessage =
-          (typeof backendMessage === "string" && backendMessage) ||
-          (typeof backendMessageFallback === "string" && backendMessageFallback) ||
-          (typeof err?.message === "string" && err.message) ||
-          "";
-
-        return {
-          success: false,
-          // Guarantee `message` is always a string (never undefined).
-          message: extractedMessage || "Login failed",
-        };
-    }
-}
-
-export const updateProfileAction = async (profileData: any) => {
-    // Implement your update logic here
-    return { success: true, data: profileData, message: "Profile updated successfully" };
+    return {
+      success: true,
+      message: result.message || "Registration successful",
+      data: result.data,
+    };
+  } catch (err: any) {
+    return {
+      success: false,
+      message: err.message || "Registration failed",
+    };
+  }
 };
 
-export const revalidatePath = async (path: string) => {
-    // Implement your revalidation logic here
-    return true;
+/**
+ * Login User
+ */
+/**
+ * Login User
+ */
+export const handleLogin = async (formData: any) => {
+  try {
+    const cookieStore = await cookies();
+
+    // Read CSRF token from cookie
+    const csrfToken = cookieStore.get("csrf-token")?.value;
+
+    // Login request
+    const result = await loginUser(formData, {
+      headers: {
+        ...(csrfToken ? { "x-csrf-token": csrfToken } : {}),
+        ...(csrfToken ? { Cookie: `csrf-token=${csrfToken}` } : {}),
+      },
+    });
+
+    // Normalize backend response
+    const data = result.data ?? result;
+
+    const user = data.user ?? data;
+    const token = data.token ?? result.token ?? null;
+
+    if (!user) {
+      return {
+        success: false,
+        message: result.message || "Login failed",
+      };
+    }
+
+    // Store user in Next.js cookie
+    await setUserData(user);
+
+    // Store auth token if returned
+    if (token) {
+      await setAuthToken(token);
+    }
+
+    return {
+      success: true,
+      message: result.message || "Login successful",
+      data: user,
+      token,
+    };
+  } catch (err: any) {
+    return {
+      success: false,
+      message:
+        err.response?.data?.message ||
+        err.message ||
+        "Login failed",
+    };
+  }
 };
 
-export async function handleUpdateProfile(profileData: FormData) {
-    try {
-        const result = await updateProfile(profileData);
-        if (result.success) {
-            await setUserData(result.data); // update cookie 
-            revalidatePath('/user/profile'); // revalidate profile page/ refresh new data
-            return {
-                success: true,
-                message: 'Profile updated successfully',
-                data: result.data
-            };
-        }
-        return { success: false, message: result.message || 'Failed to update profile' };
-    } catch (error: Error | any) {
-        return { success: false, message: error.message };
+/**
+ * Update Profile
+ */
+export const handleUpdateProfile = async (
+  profileData: FormData
+) => {
+  try {
+    const result = await updateProfile(profileData);
+
+    if (!result.success) {
+      return {
+        success: false,
+        message:
+          result.message || "Failed to update profile",
+      };
     }
-}
+
+    await setUserData(result.data);
+
+    return {
+      success: true,
+      message:
+        result.message || "Profile updated successfully",
+      data: result.data,
+    };
+  } catch (err: any) {
+    return {
+      success: false,
+      message:
+        err.message || "Failed to update profile",
+    };
+  }
+};
+

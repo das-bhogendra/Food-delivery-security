@@ -41,10 +41,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 setIsAuthenticated(false);
             }
         } catch (err: any) {
-            console.log("Auth check failed (non-blocking):", err?.message);
+            const msg = err?.message ?? err?.response?.data?.message ?? "";
+            console.log("Auth check failed (non-blocking):", msg || err);
+
             setIsAuthenticated(false);
             setUser(null);
         } finally {
+
             // Always set loading to false - this is critical!
             setLoading(false);
         }
@@ -52,8 +55,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     useEffect(() => {
         checkAuth();
+
+        // Bootstrap CSRF cookie + in-memory token once on app load.
+        // This ensures the browser stores the HttpOnly cookie from /api/csrf.
+        (async () => {
+            try {
+                const axiosModule = await import("../lib/api/axios");
+                const axiosInstance = axiosModule.default;
+                const { setCsrfToken } = axiosModule;
+
+                const res = await axiosInstance.get("/api/csrf");
+                if (res?.data?.csrfToken) {
+                    setCsrfToken(res.data.csrfToken);
+                }
+            } catch (e) {
+                console.log("CSRF bootstrap failed (non-blocking):", (e as any)?.message || e);
+            }
+        })();
+
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+
 
     const logout = async () => {
         try {

@@ -1,6 +1,12 @@
 // frontend/lib/axios.ts
 import axios from "axios";
 
+let csrfToken: string | null = null;
+
+export const setCsrfToken = (token: string) => {
+  csrfToken = token;
+};
+
 const BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ||
   "http://localhost:5005"; 
@@ -12,6 +18,18 @@ const axiosInstance = axios.create({
   },
   withCredentials: true, // for cookies
   timeout: 30000,
+});
+
+axiosInstance.interceptors.request.use((config) => {
+  if (
+    csrfToken &&
+    config.method &&
+    ["post", "put", "patch", "delete"].includes(config.method.toLowerCase())
+  ) {
+    config.headers["x-csrf-token"] = csrfToken;
+  }
+
+  return config;
 });
 
 

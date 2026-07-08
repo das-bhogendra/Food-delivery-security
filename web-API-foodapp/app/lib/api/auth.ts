@@ -1,70 +1,96 @@
-import axios from './axios'; // aaghi banako axios.ts bata
-import {API} from './endpoints'
+import type { AxiosRequestConfig } from "axios";
+import axios from "./axios";
+import { API } from "./endpoints";
 
-export const registerUser=async(registerData:any)=>{
-    try{
-        const response = await axios.post(
-            API.AUTH.REGISTER,
-            registerData
-        );
-        return response.data;
-    } catch(err:Error | any){
-        throw new Error(
-            err.response?.data?.message
-            || err.message
-            || "Registration failed"
-        )
-    }
-}
-
-export const loginUser = async(loginData: any)=>{
-    try{
-        const response = await axios.post(
-            API.AUTH.LOGIN,
-            loginData
-        );
-        return response.data;
-    } catch(err:Error | any){
-        throw new Error(
-            err.response?.data?.message
-            || err.message
-            || "Login failed"
-        )
-    }
-}
-
-export const whoAmI = async () => {
+/**
+ * Register User
+ */
+export const registerUser = async (registerData: any) => {
   try {
-    const response = await axios.get(API.AUTH.WHOAMI, {
-      withCredentials: true, // important to send cookie
-      headers: {
-        // Some setups may rely on Authorization header instead of cookies
-        // (cookie name is auth_token)
-      },
-    });
+    const response = await axios.post(
+      API.AUTH.REGISTER,
+      registerData
+    );
 
-    // API returns { success: true, data: { id, email, name, role, ... } }
-    // So we need to return response.data.data
-    return response.data.data;
-  } catch (error: Error | any) {
-    throw new Error(error.response?.data?.message || error.message || 'Whoami failed');
+    return response.data;
+  } catch (err: any) {
+    throw new Error(
+      err.response?.data?.message ||
+      err.message ||
+      "Registration failed"
+    );
   }
 };
 
-export const updateProfile = async (profileData: any) => {
+/**
+ * Login User
+ */
+export const loginUser = async (
+  loginData: any,
+  config: AxiosRequestConfig = {}
+) => {
+  try {
+    const response = await axios.post(
+      API.AUTH.LOGIN,
+      loginData,
+      config
+    );
+
+    return response.data;
+  } catch (err: any) {
+    throw new Error(
+      err.response?.data?.message ||
+      err.message ||
+      "Login failed"
+    );
+  }
+};
+
+/**
+ * Get Logged-in User
+ */
+export const whoAmI = async () => {
+  try {
+    const response = await axios.get(API.AUTH.WHOAMI, {
+      withCredentials: true,
+    });
+
+    // Axios interceptor converts 401 -> { data: null }
+    if (!response?.data) {
+      return null;
+    }
+
+    return response.data.data ?? null;
+  } catch (err: any) {
+    throw new Error(
+      err.response?.data?.message ||
+      err.message ||
+      "Whoami failed"
+    );
+  }
+};
+
+/**
+ * Update Profile
+ */
+export const updateProfile = async (profileData: FormData) => {
   try {
     const response = await axios.put(
       API.AUTH.UPDATEPROFILE,
       profileData,
       {
         headers: {
-          'Content-Type': 'multipart/form-data', // for file upload/multer
-        }
+          "Content-Type": "multipart/form-data",
+        },
       }
     );
+
     return response.data;
-  } catch (error: Error | any) {
-    throw new Error(error.response?.data?.message
-      || error.message || 'Update profile failed');
+  } catch (err: any) {
+    throw new Error(
+      err.response?.data?.message ||
+      err.message ||
+      "Update profile failed"
+    );
   }
-}
+};

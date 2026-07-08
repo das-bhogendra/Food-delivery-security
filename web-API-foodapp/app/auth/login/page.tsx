@@ -22,47 +22,30 @@ export default function LoginPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-orange-500 border-b-4"></div>
+      <div className="flex items-center justify-center min-h-screen bg-white">
+        <div className="animate-spin rounded-full h-12 w-12 border-4 border-[#FACC15] border-b-transparent"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-orange-50 via-white to-amber-50 dark:from-slate-950 dark:via-zinc-950 dark:to-neutral-900 p-4">
-      
-      {/* LEFT SIDE - BRAND SECTION (hidden on mobile) */}
-      <div className="hidden lg:flex w-1/2 h-screen bg-orange-600 items-center justify-center flex-col p-10 relative overflow-hidden">
-        <div className="absolute inset-0 bg-black/10"></div>
-        <div className="relative z-10 text-center">
-          <div className="mb-8">
-            <Image
-              src="/assets/images/hero-bg.jpg"
-              alt="Food Image"
-              width={400}
-              height={400}
-              className="object-contain max-h-[300px] w-auto mx-auto"
-              priority
-            />
+    <div className="min-h-screen w-full flex items-center justify-center bg-white p-4">
+      <div className="w-full max-w-[450px]">
+        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-10">
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-bold text-[#111827]">Sign In</h1>
+            <p className="mt-2 text-sm text-[#6B7280]">
+              Enter your credentials to access your account
+            </p>
           </div>
-          <h1 className="text-4xl font-bold text-white mb-4">Welcome Back</h1>
-          <p className="text-orange-100 text-lg">Sign in to continue your culinary journey</p>
-        </div>
-      </div>
 
-      {/* RIGHT SIDE - LOGIN SECTION */}
-      <div className="w-full lg:w-1/2 h-full flex items-center justify-center p-8">
-        <div className="w-full max-w-md">
-          <div className="bg-white dark:bg-zinc-900/80 border border-transparent dark:border-white/10 rounded-2xl shadow-xl p-8 space-y-6">
-            <div className="text-center">
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-zinc-100 mb-2">Sign In</h1>
-              <p className="text-gray-500 dark:text-zinc-300">Enter your credentials to access your account</p>
-            </div>
-            <LoginForm />
+          <LoginForm />
+
+          <div className="mt-6 text-center text-xs text-[#6B7280]">
+            By continuing, you agree to our Terms & Privacy Policy.
           </div>
         </div>
       </div>
-
     </div>
   );
 }

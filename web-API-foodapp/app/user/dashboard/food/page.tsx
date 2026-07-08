@@ -55,7 +55,7 @@ const FoodPageInner = () => {
         placeholder="Search foods..."
         value={searchTerm}
         onChange={e => setSearchTerm(e.target.value)}
-        className="w-full p-2 border rounded-lg mb-4"
+        className="w-full p-2 border rounded-lg mb-4 bg-white text-black placeholder:text-gray-500 focus:text-black caret-black"
       />
 
       {/* Filters */}

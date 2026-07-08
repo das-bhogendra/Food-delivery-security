@@ -43,17 +43,26 @@ export default function CreateFoodForm({ onSuccess }: Props) {
     setLoading(true);
 
     try {
-      // Build FormData
+      // Build FormData (must match backend Zod schema keys)
       const data = new FormData();
       data.append("name", formData.name);
-      data.append("price", formData.price);
+
+      // IMPORTANT: multipart/form-data still reaches Express as strings.
+      // Convert in a way that backend Zod can interpret into numbers/booleans.
+      // Backend schema expects: price:number, isAvailable:boolean, isBestSeller:boolean, isDiscounted:boolean
+      const priceNumber = Number(formData.price);
+      data.append("price", String(priceNumber));
+
       data.append("type", formData.type);
-      data.append("available", String(formData.available));
-      data.append("bestSeller", String(formData.bestSeller));
+      data.append("isAvailable", formData.available ? "true" : "false");
+      data.append("isBestSeller", formData.bestSeller ? "true" : "false");
+      data.append("isDiscounted", "false");
       if (formData.image) data.append("foodPhoto", formData.image); // must match backend key
+
 
       // Call API — token handled via cookie
       await foodApi.create(data);
+
 
       alert("Food item created successfully!");
       onSuccess?.();
@@ -70,7 +79,19 @@ export default function CreateFoodForm({ onSuccess }: Props) {
 
     } catch (error: any) {
       console.error("Create Food Error:", error);
-      alert(error?.response?.data?.message || "Failed to create food item.");
+
+      const msg = error?.response?.data?.message;
+      // Zod returns an array of issues; make it readable for the user.
+      const readableMessage = Array.isArray(msg)
+        ? msg
+            .map((i: any) => (i?.message ? String(i.message) : null))
+            .filter(Boolean)
+            .join("\n")
+        : msg;
+
+      alert(
+        readableMessage || "Failed to create food item."
+      );
     } finally {
       setLoading(false);
     }
@@ -89,7 +110,7 @@ export default function CreateFoodForm({ onSuccess }: Props) {
             value={formData.name}
             required
             onChange={handleChange}
-            className="w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none"
+            className="w-full px-4 py-2 border rounded-xl bg-white text-black placeholder:text-gray-500 focus:ring-2 focus:ring-[#FACC15] focus:text-black caret-black outline-none"
           />
         </div>
 
