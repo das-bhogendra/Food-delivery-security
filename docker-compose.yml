@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  backend:
+    build: ./backend/web-API-foodapp
+    ports:
+      - "5005:5005"
+    environment:
+      - NODE_ENV=production
+      - PORT=5005
+      - MONGODB_URI=mongodb://db:27017/foodapp_backend
+      - JWT_SECRET=foodapp_jwt_secret_2026
+    volumes:
+      - uploads_data:/app/uploads
+      - food_photos_data:/app/public/food_photos
+    depends_on:
+      - db
+    restart: unless-stopped
+
+  frontend:
+    build: ./web-API-foodapp
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+  db:
+    image: mongo:6
+    volumes:
+      - mongo_data:/data/db
+    restart: unless-stopped
+
+volumes:
+  mongo_data:
+  uploads_data:
+  food_photos_data:
