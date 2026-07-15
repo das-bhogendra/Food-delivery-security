@@ -1,0 +1,9 @@
+node_modules
+.next
+.git
+.env
+login.html
+login_response.json
+backend_food.json
+cypress
+*.log
