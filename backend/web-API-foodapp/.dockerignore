@@ -1,0 +1,8 @@
+node_modules
+dist
+.env
+_tests_
+test_error.txt
+test_output.txt
+TODO.md
+*.log
