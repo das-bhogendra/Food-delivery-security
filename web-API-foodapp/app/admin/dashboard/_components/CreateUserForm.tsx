@@ -11,6 +11,7 @@ export default function CreateUserForm() {
         resolver: zodResolver(UserSchema)
     });
     const [previewImage, setPreviewImage] = useState<string | null>(null);
+    const [error, setError] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const handleImageChange = (file: File | undefined, onChange: (file: File | undefined) => void) => {
