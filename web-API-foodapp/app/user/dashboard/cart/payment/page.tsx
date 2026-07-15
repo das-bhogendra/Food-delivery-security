@@ -96,6 +96,7 @@ const PaymentPageContent = () => {
 
       const paymentData = {
         foodItems: cartItems.map((item) => ({
+           _id: item._id,
           foodId: item._id,
           name: item.name,
           price: item.price,
