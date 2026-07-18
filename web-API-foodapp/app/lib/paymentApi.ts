@@ -41,9 +41,14 @@ export interface PaymentResponse {
 
 export const paymentApi = {
   processPayment: async (request: PaymentRequest): Promise<PaymentResponse> => {
-    const res = await axios.post("/api/payment/create", request, { withCredentials: true });
+    const res = await axios.post("/api/payment/create", request, {
+      withCredentials: true,
+    });
     return res.data;
   },
+
+
+
 
   getPaymentByOrder: async (orderId: string): Promise<any> => {
     const res = await axios.get(`/api/payment/${orderId}`, { withCredentials: true });
