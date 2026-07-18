@@ -7,6 +7,7 @@ import { FoodItem } from "../../../src/models/food.model";
 import bcrypt from "bcryptjs";
 
 describe("Delete Food Item Integration Tests", () => {
+
   let token: string;
   let foodId: string;
   const uniqueEmail = `test_deletefood_${Date.now()}@example.com`;
@@ -32,14 +33,28 @@ describe("Delete Food Item Integration Tests", () => {
       role: "admin",
     });
 
-    // Login to get token
-    const loginRes = await request(app).post("/api/auth/login").send({
-      email: uniqueEmail,
+    // Login to get auth cookie (authorizedMiddleware reads req.cookies.auth_token)
+    const agent = request.agent(app);
+    (globalThis as any).__foodDelAuthAgent = agent;
+
+    const loginRes = await agent.post("/api/auth/login").send({
+      identifier: uniqueEmail,
       password: "Test@1234",
     });
+    expect(loginRes.status).toBe(200);
+
+    // Sanity: ensure auth_token cookie was issued
+    const setCookie = loginRes.headers["set-cookie"];
+    const cookieArr = Array.isArray(setCookie) ? setCookie : setCookie ? [setCookie] : [];
+    const authCookie = cookieArr.find((c) => c.includes("auth_token"));
+    expect(authCookie).toBeDefined();
+
+    // Keep token variable only for debugging; auth relies on cookie
     token = loginRes.body.token;
 
     // Create a food item to delete
+
+
     const food = await FoodItem.create({
       name: "Temp Food",
       price: 200,
@@ -51,11 +66,12 @@ describe("Delete Food Item Integration Tests", () => {
   }, 30000);
 
   test("should delete food successfully", async () => {
-    const res = await request(app)
-      .delete(`/api/fooditems/${foodId}`)
-      .set("Authorization", `Bearer ${token}`);
+    const agent = (globalThis as any).__foodDelAuthAgent as ReturnType<typeof request.agent>;
 
+    const res = await agent
+      .delete(`/api/fooditems/${foodId}`);
     expect(res.status).toBe(200);
+
     expect(res.body.message).toBe("Food item deleted successfully");
   });
 

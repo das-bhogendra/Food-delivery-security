@@ -17,6 +17,8 @@ import { connectionDatabase } from "./database/mongodb";
 import paymentRoutes from "./routes/payment.routes";
 
 import csrfRoutes from "./routes/csrf.route";
+import logoutRoutes from "./routes/logout.route";
+
 import {
   doubleCsrfProtection,
 } from "./middlewares/csrf.middleware";
@@ -48,7 +50,7 @@ app.use(
         scriptSrc: ["'self'"],
         styleSrc: ["'self'", "'unsafe-inline'"],
         imgSrc: ["'self'", "data:", "https:"],
-        connectSrc: ["'self'", "http://localhost:3000", "http://localhost:3001"],
+        connectSrc: ["'self'", "http://localhost:3000", "http://localhost:3001", "http://192.168.80.1:3000",],
         objectSrc: ["'none'"],
         frameAncestors: ["'none'"],
         baseUri: ["'self'"],
@@ -60,11 +62,14 @@ app.use(
 
 app.use(
   cors({
-    origin: ["http://localhost:3000", "http://localhost:3001"],
-    methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
-    allowedHeaders: ["Content-Type", "Authorization"],
+    origin: ["http://localhost:3000", "http://localhost:3001", "http://192.168.80.1:3000",],
     credentials: true,
-    optionsSuccessStatus: 200,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+    allowedHeaders: [
+      "Content-Type",
+      "Authorization",
+      "x-csrf-token",
+    ],
   })
 );
 // Parse JSON body
@@ -77,6 +82,11 @@ app.use(
 app.use(cookieParser());
 
 app.use("/api/csrf", csrfRoutes);
+
+app.use("/api/auth", authRoutes);
+
+app.use("/api/auth", logoutRoutes);
+
 
 // Apply CSRF protection AFTER the token route
 app.use(doubleCsrfProtection);
@@ -91,8 +101,7 @@ app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 // ROUTES
 // =======================
 
-// Auth routes
-app.use("/api/auth", authRoutes);
+
 
 // Admin user routes
 app.use("/api/admin/users", adminUserRoutes);
@@ -146,6 +155,7 @@ async function start() {
 }
 
 start();
+
 
 
 

@@ -5,6 +5,14 @@ import { JwtUtil } from "../../utils/jwt.utils";
 import { HttpError } from "../../errors/http.error";
 import bcrypt from "bcryptjs";
 
+// Jest globals for TS
+declare const jest: any;
+declare const describe: any;
+declare const it: any;
+declare const beforeEach: any;
+declare const afterEach: any;
+declare const expect: any;
+
 jest.mock("../../repository/user.repository");
 jest.mock("../../utils/password.utils");
 jest.mock("../../utils/jwt.utils");
@@ -27,6 +35,11 @@ describe("UserService", () => {
       createUser: jest.fn(),
       getUserById: jest.fn(),
       updateOneUser: jest.fn(),
+      getAuthUser: jest.fn(),
+      resetFailedLoginAttempts: jest.fn(),
+      incrementFailedLoginAttempts: jest.fn(),
+      lockAccount: jest.fn(),
+      updateLastLogin: jest.fn(),
     };
   };
 
@@ -73,46 +86,72 @@ describe("UserService", () => {
 
   // ================= LOGIN USER =================
   it("should login user successfully", async () => {
-    const dto = { email: "a", password: "pass" };
+    const dto = { identifier: "a", password: "pass" };
     const mocks = mockUserRepo();
+
+    // Updated to match current implementation:
+    // - userRepository.getAuthUser(dto.identifier)
+    // - on success: updateLastLogin(user._id.toString()) returns an object with toObject()
     const mockUser: any = {
       _id: "1",
       email: "a",
+      username: "a",
       password: "hashed",
       role: "user",
-      toObject: () => ({ _id: "1", email: "a", password: "hashed", role: "user" })
+      failedLoginAttempts: 0,
+      lockUntil: null,
     };
-    mocks.getUserByEmail.mockResolvedValue(mockUser);
+
+    const updatedUser: any = {
+      ...mockUser,
+      toObject: () => ({ _id: "1", email: "a", password: "hashed", role: "user" }),
+    };
+
+    mocks.getAuthUser.mockResolvedValue(mockUser);
+    mocks.updateLastLogin.mockResolvedValue(updatedUser);
+
     (PasswordUtil.compare as jest.Mock).mockResolvedValue(true);
     (JwtUtil.sign as jest.Mock).mockReturnValue("jwtToken");
 
-    jest.spyOn(UserRepository.prototype, 'getUserByEmail').mockImplementation(mocks.getUserByEmail);
+    jest.spyOn(UserRepository.prototype, 'getAuthUser').mockImplementation(mocks.getAuthUser);
+    jest.spyOn(UserRepository.prototype, 'updateLastLogin').mockImplementation(mocks.updateLastLogin);
 
     const result = await service.loginUser(dto as any);
 
-    expect(mocks.getUserByEmail).toHaveBeenCalledWith(dto.email);
+
+    expect(mocks.getAuthUser).toHaveBeenCalledWith(dto.identifier);
     expect(PasswordUtil.compare).toHaveBeenCalledWith(dto.password, mockUser.password);
     expect(JwtUtil.sign).toHaveBeenCalledWith({ id: mockUser._id, role: mockUser.role });
     expect(result).toEqual({ token: "jwtToken", user: { _id: "1", email: "a", role: "user" } });
   });
 
+
   it("should throw error if user not found", async () => {
     const mocks = mockUserRepo();
-    mocks.getUserByEmail.mockResolvedValue(null);
-    jest.spyOn(UserRepository.prototype, 'getUserByEmail').mockImplementation(mocks.getUserByEmail);
+    mocks.getAuthUser.mockResolvedValue(null);
+    jest.spyOn(UserRepository.prototype, 'getAuthUser').mockImplementation(mocks.getAuthUser);
 
-    await expect(service.loginUser({ email: "a", password: "p" } as any)).rejects.toThrow(HttpError);
+    await expect(service.loginUser({ identifier: "a", password: "p" } as any)).rejects.toThrow(HttpError);
   });
+
 
   it("should throw error if password invalid", async () => {
     const mocks = mockUserRepo();
-    const mockUser: any = { password: "hashed", toObject: () => ({ password: "hashed" }) };
-    mocks.getUserByEmail.mockResolvedValue(mockUser);
+    const mockUser: any = {
+      _id: "1",
+      password: "hashed",
+      failedLoginAttempts: 0,
+      lockUntil: null,
+      toObject: () => ({ password: "hashed" }),
+    };
+    mocks.getAuthUser.mockResolvedValue(mockUser);
     (PasswordUtil.compare as jest.Mock).mockResolvedValue(false);
+    mocks.incrementFailedLoginAttempts.mockResolvedValue({ ...mockUser, failedLoginAttempts: 1 });
 
-    jest.spyOn(UserRepository.prototype, 'getUserByEmail').mockImplementation(mocks.getUserByEmail);
+    jest.spyOn(UserRepository.prototype, 'getAuthUser').mockImplementation(mocks.getAuthUser);
+    jest.spyOn(UserRepository.prototype, 'incrementFailedLoginAttempts').mockImplementation(mocks.incrementFailedLoginAttempts);
 
-    await expect(service.loginUser({ email: "a", password: "p" } as any)).rejects.toThrow(HttpError);
+    await expect(service.loginUser({ identifier: "a", password: "p" } as any)).rejects.toThrow(HttpError);
   });
 
   // ================= GET USER BY ID =================
@@ -147,6 +186,9 @@ describe("UserService", () => {
     (bcrypt.hash as jest.Mock).mockResolvedValue("hashedNewPass");
     const dto = { email: "b", username: "u2", password: "newpass" };
     mocks.updateOneUser.mockResolvedValue({ ...mockUser, ...dto, password: "hashedNewPass" } as any);
+
+    // Service uses PasswordUtil.hash (not bcrypt.hash) for password updates
+    (PasswordUtil.hash as jest.Mock).mockResolvedValue("hashedNewPass");
 
     jest.spyOn(UserRepository.prototype, 'getUserById').mockImplementation(mocks.getUserById);
     jest.spyOn(UserRepository.prototype, 'getUserByEmail').mockImplementation(mocks.getUserByEmail);

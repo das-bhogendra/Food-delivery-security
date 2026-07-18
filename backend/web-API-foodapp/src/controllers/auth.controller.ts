@@ -28,8 +28,9 @@ export class AuthController {
 
       res.cookie("auth_token", token, {
         httpOnly: true,
-        sameSite: "lax",
-        secure: false, // true in production
+        sameSite:
+          process.env.NODE_ENV === "production" ? "none" : "lax",
+        secure: process.env.NODE_ENV === "production",
         path: "/",
         maxAge: 7 * 24 * 60 * 60 * 1000,
       });
@@ -68,8 +69,9 @@ export class AuthController {
 
       res.cookie("auth_token", token, {
         httpOnly: true,
-        sameSite: "lax",
-        secure: false, // true in production
+        sameSite:
+          process.env.NODE_ENV === "production" ? "none" : "lax",
+        secure: process.env.NODE_ENV === "production",
         path: "/",
         maxAge: 7 * 24 * 60 * 60 * 1000,
       });
@@ -91,23 +93,28 @@ export class AuthController {
   }
 
   async getProfile(req: Request, res: Response) {
-        try {
-            const userId = req.user?._id?.toString();
-            if (!userId) {
-                return res.status(400).json(
-                    { success: false, message: "User Id Not found" }
-                );
-            }
-            const user = await userService.getUserById(userId);
-            return res.status(200).json(
-                { success: true, data: user, message: "User profile fetched successfully" }
-            );
-        } catch (error: Error | any) {
-            return res.status(error.statusCode || 500).json(
-                { success: false, message: error.message || "Internal Server Error" }
-            );
-        }
+    try {
+      const userId = req.user?._id?.toString();
+      if (!userId) {
+        return res.status(400).json({
+          success: false,
+          message: "User Id Not found",
+        });
+      }
+
+      const user = await userService.getUserById(userId);
+      return res.status(200).json({
+        success: true,
+        data: user,
+        message: "User profile fetched successfully",
+      });
+    } catch (error: Error | any) {
+      return res.status(error.statusCode || 500).json({
+        success: false,
+        message: error.message || "Internal Server Error",
+      });
     }
+  }
 
   
 

@@ -32,12 +32,14 @@ describe("Update Food Item Integration Tests", () => {
       role: "admin",
     });
 
-    // Login to get token
-    const loginRes = await request(app).post("/api/auth/login").send({
+    // Login to get auth cookie (authorizedMiddleware reads req.cookies.auth_token)
+    const agent = request.agent(app);
+    const loginRes = await agent.post("/api/auth/login").send({
       email: uniqueEmail,
       password: "Test@1234",
     });
     token = loginRes.body.token;
+    (globalThis as any).__foodUpdAuthAgent = agent;
 
     // Create a food item to update
     const food = await FoodItem.create({
@@ -52,9 +54,9 @@ describe("Update Food Item Integration Tests", () => {
   }, 30000);
 
   test("should update food successfully", async () => {
-    const res = await request(app)
+    const agent = (globalThis as any).__foodUpdAuthAgent as ReturnType<typeof request.agent>;
+    const res = await agent
       .put(`/api/fooditems/${foodId}`)
-      .set("Authorization", `Bearer ${token}`)
       .send({
         name: "Updated Food",
         price: 300,

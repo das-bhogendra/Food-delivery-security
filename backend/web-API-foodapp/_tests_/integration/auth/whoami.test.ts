@@ -3,34 +3,40 @@ import app from "../../../src/app";
 import { UserModel } from "../../../src/models/user.model";
 import { connectionDatabase } from "../../../src/database/mongodb";
 import mongoose from "mongoose";
-import jwt from "jsonwebtoken";
-import { JWT_SECRET } from "../../../src/config/config";
+import bcrypt from "bcryptjs";
 
-let token: string;
+let tokenCookieAgent: request.Agent;
 const uniqueEmail = `test_whoami_${Date.now()}@example.com`;
 const uniqueUsername = `testuser_whoami_${Date.now()}`;
 
 beforeAll(async () => {
-  // Connect to DB
   await connectionDatabase();
 
-  // Clear test users
   const collections = Object.keys(mongoose.connection.collections);
   for (const key of collections) {
     await mongoose.connection.collections[key].deleteMany({});
   }
 
-  // Create test user directly in DB
-  const user = await UserModel.create({
+  const hashedPassword = await bcrypt.hash("Test@1234", 10);
+  await UserModel.create({
     email: uniqueEmail,
-    password: "Test@1234",
+    password: hashedPassword,
     username: uniqueUsername,
     fullName: "Test User WhoAmI",
+    role: "user",
   });
 
-  // Generate JWT token for middleware
-  token = jwt.sign({ id: user._id, role: "user" }, JWT_SECRET, { expiresIn: "7d" });
+  // Use cookie returned by /api/auth/login (authorizedMiddleware reads req.cookies.auth_token)
+  tokenCookieAgent = request.agent(app);
+  const loginRes = await tokenCookieAgent.post("/api/auth/login").send({
+    identifier: uniqueEmail,
+    password: "Test@1234",
+  });
+
+  expect(loginRes.status).toBe(200);
 });
+
+
 
 afterAll(async () => {
   try {
@@ -47,9 +53,7 @@ afterAll(async () => {
 
 describe("WhoAmI Integration Tests", () => {
   test("should return profile with valid token", async () => {
-    const res = await request(app)
-      .get("/api/auth/whoami")
-      .set("Authorization", `Bearer ${token}`);
+    const res = await tokenCookieAgent.get("/api/auth/whoami");
 
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
@@ -63,3 +67,4 @@ describe("WhoAmI Integration Tests", () => {
     expect(res.body.success).toBe(false);
   });
 });
+

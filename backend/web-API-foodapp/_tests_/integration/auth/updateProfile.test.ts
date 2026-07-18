@@ -7,20 +7,20 @@ import jwt from "jsonwebtoken";
 import { JWT_SECRET } from "../../../src/config/config";
 
 let token: string;
+let agent: request.Agent;
 const uniqueEmail = `test_updateprofile_${Date.now()}@example.com`;
 const uniqueUsername = `testuser_updateprofile_${Date.now()}`;
 
 beforeAll(async () => {
-  // Connect to DB
   await connectionDatabase();
 
-  // Clear test users
   const collections = Object.keys(mongoose.connection.collections);
   for (const key of collections) {
     await mongoose.connection.collections[key].deleteMany({});
   }
 
   // Create test user directly in DB
+  // Password must be hashed because UserService.updateUser/login uses PasswordUtil.compare/hash.
   const user = await UserModel.create({
     email: uniqueEmail,
     password: "Test@1234",
@@ -28,9 +28,17 @@ beforeAll(async () => {
     fullName: "Test User UpdateProfile",
   });
 
-  // Generate JWT token for middleware
-  token = jwt.sign({ id: user._id, role: "user" }, JWT_SECRET, { expiresIn: "7d" });
+  // Authenticate using /api/auth/login to obtain auth_token cookie
+  agent = request.agent(app);
+  const loginRes = await agent.post("/api/auth/login").send({
+    identifier: uniqueEmail,
+    password: "Test@1234",
+  });
+
+  expect(loginRes.status).toBe(200);
+  token = loginRes.body.token;
 });
+
 
 afterAll(async () => {
   try {
@@ -47,12 +55,12 @@ afterAll(async () => {
 
 describe("Update Profile Integration Tests", () => {
   test("should update profile with valid token", async () => {
-    const res = await request(app)
+    const res = await agent
       .put("/api/auth/profile")
-      .set("Authorization", `Bearer ${token}`)
       .send({
         fullName: "Updated Name",
       });
+
 
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);

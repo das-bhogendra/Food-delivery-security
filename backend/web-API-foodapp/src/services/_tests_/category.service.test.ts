@@ -2,6 +2,14 @@ import { CategoryService } from "../category.service";
 import { CategoryRepository } from "../../repository/category.repository";
 import { CreateCategoryDto, UpdateCategoryDto } from "../../dtos/category.dto";
 
+// Jest globals for TS
+declare const jest: any;
+declare const describe: any;
+declare const it: any;
+declare const beforeEach: any;
+declare const afterEach: any;
+declare const expect: any;
+
 // ======= MOCK REPOSITORY =======
 jest.mock("../../repository/category.repository");
 
@@ -23,9 +31,9 @@ describe("CategoryService", () => {
 
   // ================= CREATE CATEGORY =================
   it("should create a category", async () => {
-    const dto: CreateCategoryDto = { name: "Food", description: "Food category", addedBy: "user123" };
+    const dto: CreateCategoryDto = { name: "Food", description: "Food category" };
     const userId = "user123";
-    const mockCategory = { _id: "1", ...dto, createdBy: userId };
+    const mockCategory = { _id: "1", ...dto, addedBy: userId };
 
     repo.create.mockResolvedValue(mockCategory as any);
 
@@ -59,8 +67,8 @@ describe("CategoryService", () => {
 
   // ================= UPDATE CATEGORY =================
   it("should update category", async () => {
-    const dto: UpdateCategoryDto = { id: "1", name: "Updated Food", addedBy: "user123" };
-    const mockUpdated = { _id: "1", name: "Updated Food", addedBy: "user123" };
+    const dto = { name: "Updated Food" } as UpdateCategoryDto;
+    const mockUpdated = { _id: "1", name: "Updated Food" };
 
     repo.update.mockResolvedValue(mockUpdated as any);
 

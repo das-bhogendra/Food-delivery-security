@@ -4,6 +4,13 @@ import fs from "fs";
 import path from "path";
 import mongoose from "mongoose";
 
+// Jest globals for TS
+declare const jest: any;
+declare const describe: any;
+declare const it: any;
+declare const beforeEach: any;
+declare const expect: any;
+
 // ===== MOCK FS & MONGOOSE =====
 jest.mock("fs");
 jest.mock("../../models/food.model");
@@ -20,12 +27,16 @@ describe("FoodItemService", () => {
 
   // ================= CREATE =================
   it("should create a food item", async () => {
-    const dto = { name: "Pizza", type: "Veg", addedBy: "507f1f77bcf86cd799439011" };
-    const mockReturn = { ...dto, _id: "1", price: 100, isAvailable: true, isBestSeller: false, isDiscounted: false } as any;
+    const dto = { name: "Pizza", type: "Veg", isAvailable: true } as any;
+    const userId = "507f1f77bcf86cd799439011";
+    const mockReturn = { ...dto, _id: "1", price: 100, isBestSeller: false, isDiscounted: false, addedBy: userId } as any;
+
+
 
     mockFoodItem.create.mockResolvedValue(mockReturn);
 
-    const result = await service.createFoodItem(dto as any);
+    const result = await service.createFoodItem(dto as any, userId);
+
 
     expect(mockFoodItem.create).toHaveBeenCalledWith({
       ...dto,

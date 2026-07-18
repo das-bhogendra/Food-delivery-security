@@ -1,16 +1,38 @@
 import request from "supertest";
 import app from "../../src/app";
 
-export const loginAndGetToken = async (email: string, password: string): Promise<string> => {
+/**
+ * Login and return the token + cookie header value.
+ * Note: application authentication middleware uses cookie `auth_token`, not Authorization header.
+ */
+export const loginAndGetToken = async (
+  email: string,
+  password: string
+): Promise<{ token: string; cookie: string }> => {
   const res = await request(app)
     .post("/api/auth/login")
     .send({ email, password });
 
-  if (!res.body.token) {
-    throw new Error(`Login failed: ${res.body.message || 'No token returned'}`);
+  const token = res.body?.token;
+  if (!token) {
+    throw new Error(`Login failed: ${res.body?.message || "No token returned"}`);
   }
 
-  return res.body.token;
+  const setCookie = res.headers["set-cookie"];
+  if (!setCookie) {
+    throw new Error("Login failed: set-cookie header missing");
+  }
+
+  // pick auth_token cookie
+  const cookieArr = Array.isArray(setCookie) ? setCookie : [setCookie];
+  const authCookie = cookieArr.find((c) => c.includes("auth_token"));
+  if (!authCookie) {
+    throw new Error("Login failed: auth_token cookie missing");
+  }
+
+  // keep only `name=value`
+  const cookie = authCookie.split(";")[0];
+  return { token, cookie };
 };
 
 export const registerAndLogin = async (userData: {
@@ -20,16 +42,6 @@ export const registerAndLogin = async (userData: {
   fullName: string;
 }): Promise<{ token: string; userId: string }> => {
   // Register user first
-  const registerRes = await request(app)
-    .post("/api/auth/register")
-    .send(userData);
-
-  if (!registerRes.body.token) {
-    throw new Error(`Registration failed: ${registerRes.body.message || 'No token returned'}`);
-  }
-
-  return {
-    token: registerRes.body.token,
-    userId: registerRes.body.data._id
-  };
+  throw new Error("registerAndLogin not implemented in this test helper");
 };
+
