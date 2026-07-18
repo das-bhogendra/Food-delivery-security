@@ -4,9 +4,10 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { loginSchema, LoginFormData } from "../schema/login.schema";
-import { handleLogin } from "@/app/lib/actions/auth-action";
 import { useAuth } from "@/app/context/AuthContext";
 import { useState } from "react";
+import axios from "@/app/lib/api/axios";
+import { API } from "@/app/lib/api/endpoints";
 
 export function useLoginForm() {
   const { setUser, setIsAuthenticated } = useAuth();
@@ -24,10 +25,20 @@ export function useLoginForm() {
   const onSubmit = async (data: LoginFormData) => {
     setError(null);
     try {
-      const response = await handleLogin(data); // API call
-      if (response.success) {
-        setUser(response.data);
+      // IMPORTANT: do the login request in the browser so Express `Set-Cookie` reaches the user agent.
+      // This is the minimal fix for the auth_token cookie not being stored when using a Server Action.
+      const response = await axios.post(API.AUTH.LOGIN, data, {
+        // axios instance already has withCredentials: true.
+        headers: {},
+      });
+
+      // Backend responds with { success, data, token, message }
+      if (response.data?.success) {
+        const user = response.data.data;
+        setUser(user);
         setIsAuthenticated(true);
+
+
 
         // Redirect based on role
         if (response.data.role === 'admin') {
@@ -36,12 +47,15 @@ export function useLoginForm() {
           router.replace("/user/dashboard");
         }
       } else {
-        setError(response.message || "Login failed");
+        const msg = response.data?.message || "Login failed";
+        setError(msg);
       }
-    } catch (error) {
-      setError("An unexpected error occurred");
+    } catch (error: any) {
+      const message = error?.response?.data?.message || error?.message || "Login failed";
+      setError(message);
       console.error("Login failed:", error);
     }
+
   };
 
 

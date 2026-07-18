@@ -37,7 +37,12 @@ axiosInstance.interceptors.response.use(
   (response) => response,
   (error) => {
     const message = error.response?.data?.message || error.message;
-    if (message?.includes("Header malformed") || message?.includes("Unauthorized")) {
+    const isLoginRequest = error.config?.url?.includes("/api/auth/login");
+
+    if (
+      !isLoginRequest &&
+      (message?.includes("Header malformed") || message?.includes("Unauthorized"))
+    ) {
       
       return Promise.resolve({
         data: null,
@@ -47,5 +52,6 @@ axiosInstance.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
 
 export default axiosInstance; 

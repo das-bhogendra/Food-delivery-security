@@ -6,10 +6,7 @@ import {
   registerUser,
   updateProfile,
 } from "../api/auth";
-import {
-  setAuthToken,
-  setUserData,
-} from "../cookie";
+import { setUserData } from "../cookie";
 
 /**
  * Register User
@@ -74,11 +71,6 @@ export const handleLogin = async (formData: any) => {
 
     // Store user in Next.js cookie
     await setUserData(user);
-
-    // Store auth token if returned
-    if (token) {
-      await setAuthToken(token);
-    }
 
     return {
       success: true,

@@ -79,6 +79,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     const logout = async () => {
         try {
+            // Ask backend to clear HttpOnly auth_token cookie
+            try {
+                const axiosModule = await import("../lib/api/axios");
+                const axiosInstance = axiosModule.default;
+                await axiosInstance.post("/api/auth/logout", {}, { withCredentials: true });
+            } catch (e) {
+                console.log("Backend logout cookie clear failed (non-blocking):", (e as any)?.message || e);
+            }
+
             await clearAuthCookies();
             setIsAuthenticated(false);
             setUser(null);
