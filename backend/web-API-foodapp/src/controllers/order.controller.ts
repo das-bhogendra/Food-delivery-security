@@ -20,7 +20,7 @@ export const createOrder = async (req: Request, res: Response) => {
     res.status(201).json({
       success: true,
       message: "Order created successfully",
-      data: order, // ✅ order with populated foodItems and userId
+      data: order, 
     });
   } catch (error: any) {
     res.status(500).json({ success: false, message: "Server Error", error: error.message });
@@ -41,7 +41,7 @@ export const getAllOrders = async (req: Request, res: Response) => {
       orders = await service.getAllOrders();
     }
 
-    res.status(200).json({ success: true, data: orders }); // ✅ populated
+    res.status(200).json({ success: true, data: orders }); 
   } catch (error: any) {
     res.status(500).json({ success: false, message: "Server Error", error: error.message });
   }
@@ -118,12 +118,21 @@ export const updateOrder = async (req: Request, res: Response) => {
 };
 
 
-// ================= DELETE ORDER =================
 export const deleteOrder = async (req: Request, res: Response) => {
   try {
-    const deleted = await service.deleteOrder(req.params.id);
+    const existingOrder = await service.getOrderById(req.params.id);
+    if (!existingOrder)
+      return res.status(404).json({ success: false, message: "Order not found" });
 
-    if (!deleted) return res.status(404).json({ success: false, message: "Order not found" });
+    const requesterId = req.user?._id?.toString();
+    const orderOwnerId = (existingOrder.userId as any)?._id?.toString() || existingOrder.userId?.toString();
+    const isAdmin = req.user?.role === "admin";
+
+    if (orderOwnerId !== requesterId && !isAdmin) {
+      return res.status(403).json({ success: false, message: "Forbidden" });
+    }
+
+    const deleted = await service.deleteOrder(req.params.id);
 
     res.status(200).json({ success: true, message: "Order deleted successfully" });
   } catch (error: any) {
