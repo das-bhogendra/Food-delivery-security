@@ -47,13 +47,20 @@ export const getAllOrders = async (req: Request, res: Response) => {
   }
 };
 
-// ================= GET ORDER BY ID =================
 export const getOrderById = async (req: Request, res: Response) => {
   try {
     const order = await service.getOrderById(req.params.id);
     if (!order) return res.status(404).json({ success: false, message: "Order not found" });
 
-    res.status(200).json({ success: true, data: order }); // ✅ populated foodItems
+    const requesterId = req.user?._id?.toString();
+    const orderOwnerId = (order.userId as any)?._id?.toString() || order.userId?.toString();
+    const isAdmin = req.user?.role === "admin";
+
+    if (orderOwnerId !== requesterId && !isAdmin) {
+      return res.status(403).json({ success: false, message: "Forbidden" });
+    }
+
+    res.status(200).json({ success: true, data: order });
   } catch (error: any) {
     res.status(500).json({ success: false, message: "Server Error", error: error.message });
   }
