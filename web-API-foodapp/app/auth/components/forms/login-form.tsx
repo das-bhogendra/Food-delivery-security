@@ -1,16 +1,27 @@
 'use client';
 
 import Link from "next/link";
+import ReCAPTCHA from "react-google-recaptcha";
 import { useLoginForm } from "../../../features/auth/hooks/use-login-form";
 
 export default function LoginForm() {
-  const { register, handleSubmit, onSubmit, errors, isSubmitting, error } = useLoginForm();
+  const {
+    register,
+    handleSubmit,
+    onSubmit,
+    errors,
+    isSubmitting,
+    error,
+    setCaptchaToken, // add this
+  } = useLoginForm();
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-zinc-200 mb-1.5">Email / Username</label>
+        <label className="block text-sm font-medium text-gray-700 dark:text-zinc-200 mb-1.5">
+          Email / Username
+        </label>
         <input
           type="text"
           placeholder="Enter your email or username"
@@ -26,7 +37,9 @@ export default function LoginForm() {
 
       <div>
         <div className="flex justify-between items-center mb-1.5">
-          <label className="block text-sm font-medium text-gray-700 dark:text-zinc-200">Password</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-zinc-200">
+            Password
+          </label>
           <Link href="#" className="text-sm text-orange-600 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-300">
             Forgot password?
           </Link>
@@ -42,6 +55,14 @@ export default function LoginForm() {
             {errors.password.message}
           </p>
         )}
+      </div>
+
+      {/* Google reCAPTCHA */}
+      <div className="flex justify-center">
+        <ReCAPTCHA
+          sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY!}
+          onChange={(token) => setCaptchaToken(token)}
+        />
       </div>
 
       {/* Error */}
