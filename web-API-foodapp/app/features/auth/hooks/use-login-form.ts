@@ -14,6 +14,9 @@ export function useLoginForm() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
 
+  // CAPTCHA token state
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+
   const {
     register,
     handleSubmit,
@@ -24,40 +27,44 @@ export function useLoginForm() {
 
   const onSubmit = async (data: LoginFormData) => {
     setError(null);
+
+    // Check if CAPTCHA is completed
+    if (!captchaToken) {
+      setError("Please complete the CAPTCHA");
+      return;
+    }
+
     try {
-      // IMPORTANT: do the login request in the browser so Express `Set-Cookie` reaches the user agent.
-      // This is the minimal fix for the auth_token cookie not being stored when using a Server Action.
-      const response = await axios.post(API.AUTH.LOGIN, data, {
-        // axios instance already has withCredentials: true.
-        headers: {},
+      const response = await axios.post(API.AUTH.LOGIN, {
+        ...data,
+        captchaToken, // Send token to backend
       });
 
-      // Backend responds with { success, data, token, message }
       if (response.data?.success) {
         const user = response.data.data;
+
         setUser(user);
         setIsAuthenticated(true);
 
-
-
         // Redirect based on role
-        if (response.data.role === 'admin') {
+        if (user.role === "admin") {
           router.replace("/admin/dashboard");
         } else {
           router.replace("/user/dashboard");
         }
       } else {
-        const msg = response.data?.message || "Login failed";
-        setError(msg);
+        setError(response.data?.message || "Login failed");
       }
     } catch (error: any) {
-      const message = error?.response?.data?.message || error?.message || "Login failed";
+      const message =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Login failed";
+
       setError(message);
       console.error("Login failed:", error);
     }
-
   };
-
 
   return {
     register,
@@ -66,5 +73,6 @@ export function useLoginForm() {
     errors,
     isSubmitting,
     error,
+    setCaptchaToken, // Make sure this is returned
   };
 }
