@@ -6,7 +6,6 @@
     "dev": "nodemon --exec ts-node src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
-
     "test": "jest --verbose --detectOpenHandles",
     "seed": "ts-node src/seeds/seed.ts"
   },
@@ -29,6 +28,7 @@
     "typescript": "^5.9.3"
   },
   "dependencies": {
+    "axios": "^1.18.1",
     "bcryptjs": "^3.0.3",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
