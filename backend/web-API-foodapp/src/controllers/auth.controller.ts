@@ -32,7 +32,7 @@ export class AuthController {
           process.env.NODE_ENV === "production" ? "none" : "lax",
         secure: process.env.NODE_ENV === "production",
         path: "/",
-        maxAge: 7 * 24 * 60 * 60 * 1000,
+        maxAge: 15 * 24 * 60 * 60 * 1000,
       });
 
 
@@ -73,7 +73,7 @@ export class AuthController {
           process.env.NODE_ENV === "production" ? "none" : "lax",
         secure: process.env.NODE_ENV === "production",
         path: "/",
-        maxAge: 7 * 24 * 60 * 60 * 1000,
+        maxAge: 15 * 24 * 60 * 60 * 1000,
       });
 
 
