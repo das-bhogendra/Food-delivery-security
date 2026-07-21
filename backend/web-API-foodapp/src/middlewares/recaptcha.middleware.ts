@@ -6,6 +6,11 @@ export const verifyRecaptcha = async (
   res: Response,
   next: NextFunction
 ) => {
+  
+  if (process.env.NODE_ENV === "test") {
+    return next();
+  }
+
   const { captchaToken } = req.body;
 
   if (!captchaToken) {
@@ -26,7 +31,9 @@ export const verifyRecaptcha = async (
         },
       }
     );
+
     console.log("reCAPTCHA response:", response.data);
+
     if (!response.data.success) {
       return res.status(400).json({
         success: false,
