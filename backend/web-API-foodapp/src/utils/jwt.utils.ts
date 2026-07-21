@@ -5,7 +5,7 @@ export class JwtUtil {
 
   static sign(payload: object): string {
     return jwt.sign(payload, JWT_SECRET, {
-      expiresIn: "30d",
+      expiresIn: "60d",
     });
   }
 
