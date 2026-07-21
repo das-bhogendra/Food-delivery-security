@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   backend:
     build: ./backend/web-API-foodapp
@@ -10,6 +8,11 @@ services:
       - PORT=5005
       - MONGODB_URI=mongodb://db:27017/foodapp_backend
       - JWT_SECRET=foodapp_jwt_secret_2026
+      - ADMIN_FULLNAME=Admin Das
+      - ADMIN_USERNAME=admin
+      - ADMIN_EMAIL=admin@gmail.com
+      - ADMIN_PASSWORD=Admin@123
+      - RECAPTCHA_SECRET_KEY=6LdpaF0tAAAAAPoRGB-6_gAxn4RMsvf6Qq8KWs2W
     volumes:
       - uploads_data:/app/uploads
       - food_photos_data:/app/public/food_photos
@@ -18,7 +21,12 @@ services:
     restart: unless-stopped
 
   frontend:
-    build: ./web-API-foodapp
+    build:
+      context: ./web-API-foodapp
+      args:
+        NEXT_PUBLIC_RECAPTCHA_SITE_KEY: 6LdpaF0tAAAAALtEAwI2Gx3s1H3Xl9zq7kK4W5P
+    environment:
+      - NEXT_PUBLIC_RECAPTCHA_SITE_KEY=6LdpaF0tAAAAALtEAwI2Gx3s1H3Xl9zq7kK4W5P
     ports:
       - "3000:3000"
     depends_on:

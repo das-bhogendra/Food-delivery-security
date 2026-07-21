@@ -26,7 +26,7 @@ export const verifyRecaptcha = async (
         },
       }
     );
-
+    console.log("reCAPTCHA response:", response.data);
     if (!response.data.success) {
       return res.status(400).json({
         success: false,
