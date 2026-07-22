@@ -58,7 +58,7 @@ describe("Get Order Integration Tests", () => {
     // Make the request
     const res = await request(app)
       .get(`/api/orders/${orderId}`)
-      .set("Authorization", `Bearer ${token}`);
+      .set("Cookie", `auth_token=${token}`);
 
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
@@ -82,7 +82,7 @@ describe("Get Order Integration Tests", () => {
     // Make the request with invalid order ID
     const res = await request(app)
       .get("/api/orders/64abc1234567890000000000")
-      .set("Authorization", `Bearer ${token}`);
+      .set("Cookie", `auth_token=${token}`);
 
     expect(res.status).toBe(404);
   });

@@ -7,7 +7,7 @@ import { FoodItem } from "../../../src/models/food.model";
 import { Order } from "../../../src/models/order.model";
 import bcrypt from "bcryptjs";
 
-let token: string;
+let agent: request.Agent;
 let testUserId: string;
 let testFoodId: string;
 let orderId: string;
@@ -34,12 +34,12 @@ beforeAll(async () => {
   });
   testUserId = user._id.toString();
 
-  // 4️⃣ Login user to get token
-  const loginRes = await request(app).post("/api/auth/login").send({
-    email: uniqueEmail,
+  // 4️⃣ Login user to get token (via cookie)
+  agent = request.agent(app);
+  const loginRes = await agent.post("/api/auth/login").send({
+    identifier: uniqueEmail,
     password: "Test@1234",
   });
-  token = loginRes.body.token;
 
   // 5️⃣ Seed a food item
   const food = await FoodItem.create({
@@ -70,11 +70,13 @@ beforeAll(async () => {
 
 afterAll(async () => {
   try {
-    const collections = Object.keys(mongoose.connection.collections);
-    for (const key of collections) {
-      await mongoose.connection.collections[key].deleteMany({});
-    }
     if (mongoose.connection.readyState === 1) {
+      const collections = Object.keys(mongoose.connection.collections);
+      for (const key of collections) {
+        if (mongoose.connection.collections[key]) {
+          await mongoose.connection.collections[key].deleteMany({});
+        }
+      }
       await mongoose.connection.close();
     }
   } catch (error) {
@@ -84,9 +86,8 @@ afterAll(async () => {
 
 describe("Update Order Integration Tests", () => {
   test("should update order status successfully", async () => {
-    const res = await request(app)
+    const res = await agent
       .put(`/api/orders/${orderId}`)
-      .set("Authorization", `Bearer ${token}`)
       .send({ status: "confirmed" });
 
     expect(res.status).toBe(200);
@@ -96,9 +97,8 @@ describe("Update Order Integration Tests", () => {
   });
 
   test("should fail with invalid status", async () => {
-    const res = await request(app)
+    const res = await agent
       .put(`/api/orders/${orderId}`)
-      .set("Authorization", `Bearer ${token}`)
       .send({ status: "invalid_status" });
 
     expect(res.status).toBe(400);

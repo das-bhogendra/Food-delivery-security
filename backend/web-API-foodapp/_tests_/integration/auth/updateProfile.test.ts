@@ -3,10 +3,8 @@ import app from "../../../src/app";
 import { UserModel } from "../../../src/models/user.model";
 import { connectionDatabase } from "../../../src/database/mongodb";
 import mongoose from "mongoose";
-import jwt from "jsonwebtoken";
-import { JWT_SECRET } from "../../../src/config/config";
+import bcrypt from "bcryptjs";
 
-let token: string;
 let agent: request.Agent;
 const uniqueEmail = `test_updateprofile_${Date.now()}@example.com`;
 const uniqueUsername = `testuser_updateprofile_${Date.now()}`;
@@ -20,10 +18,10 @@ beforeAll(async () => {
   }
 
   // Create test user directly in DB
-  // Password must be hashed because UserService.updateUser/login uses PasswordUtil.compare/hash.
+  const hashedPassword = await bcrypt.hash("Test@1234", 10);
   const user = await UserModel.create({
     email: uniqueEmail,
-    password: "Test@1234",
+    password: hashedPassword,
     username: uniqueUsername,
     fullName: "Test User UpdateProfile",
   });
@@ -36,7 +34,6 @@ beforeAll(async () => {
   });
 
   expect(loginRes.status).toBe(200);
-  token = loginRes.body.token;
 });
 
 
@@ -79,9 +76,8 @@ describe("Update Profile Integration Tests", () => {
   });
 
   test("should update email successfully", async () => {
-    const res = await request(app)
+    const res = await agent
       .put("/api/auth/profile")
-      .set("Authorization", `Bearer ${token}`)
       .send({
         email: `new_${uniqueEmail}`,
       });
@@ -91,9 +87,8 @@ describe("Update Profile Integration Tests", () => {
   });
 
   test("should update username successfully", async () => {
-    const res = await request(app)
+    const res = await agent
       .put("/api/auth/profile")
-      .set("Authorization", `Bearer ${token}`)
       .send({
         username: `new_${uniqueUsername}`,
       });

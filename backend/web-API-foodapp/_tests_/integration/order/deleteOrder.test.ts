@@ -7,7 +7,7 @@ import { Order } from "../../../src/models/order.model";
 import bcrypt from "bcryptjs";
 
 describe("Delete Order Integration Tests", () => {
-  let token: string;
+  let agent: request.Agent;
   let testUserId: string;
   let orderId: string;
   const uniqueEmail = `test_deleteorder_${Date.now()}@example.com`;
@@ -34,12 +34,14 @@ describe("Delete Order Integration Tests", () => {
     });
     testUserId = user._id.toString();
 
-    // Login to get token
-    const loginRes = await request(app).post("/api/auth/login").send({
-      email: uniqueEmail,
+    // Login via agent to persist auth_token cookie
+    agent = request.agent(app);
+    const loginRes = await agent.post("/api/auth/login").send({
+      identifier: uniqueEmail,
       password: "Test@1234",
     });
-    token = loginRes.body.token;
+    // Verify login succeeded
+    expect(loginRes.status).toBe(200);
 
     // Create an order
     const orderObj = new Order({
@@ -64,9 +66,8 @@ describe("Delete Order Integration Tests", () => {
   }, 30000);
 
   test("should delete order successfully", async () => {
-    const res = await request(app)
-      .delete(`/api/orders/${orderId}`)
-      .set("Authorization", `Bearer ${token}`);
+    const res = await agent
+      .delete(`/api/orders/${orderId}`);
 
     expect(res.status).toBe(200);
     expect(res.body.message).toBe("Order deleted successfully");

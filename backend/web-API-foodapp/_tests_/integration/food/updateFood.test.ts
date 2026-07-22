@@ -7,7 +7,6 @@ import { FoodItem } from "../../../src/models/food.model";
 import bcrypt from "bcryptjs";
 
 describe("Update Food Item Integration Tests", () => {
-  let token: string;
   let foodId: string;
   const uniqueEmail = `test_updatefood_${Date.now()}@example.com`;
   const uniqueUsername = `testuser_updatefood_${Date.now()}`;
@@ -35,10 +34,9 @@ describe("Update Food Item Integration Tests", () => {
     // Login to get auth cookie (authorizedMiddleware reads req.cookies.auth_token)
     const agent = request.agent(app);
     const loginRes = await agent.post("/api/auth/login").send({
-      email: uniqueEmail,
+      identifier: uniqueEmail,
       password: "Test@1234",
     });
-    token = loginRes.body.token;
     (globalThis as any).__foodUpdAuthAgent = agent;
 
     // Create a food item to update
