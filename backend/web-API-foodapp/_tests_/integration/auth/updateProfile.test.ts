@@ -5,7 +5,7 @@ import { connectionDatabase } from "../../../src/database/mongodb";
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
 
-let agent: request.Agent;
+let authCookie: string;
 const uniqueEmail = `test_updateprofile_${Date.now()}@example.com`;
 const uniqueUsername = `testuser_updateprofile_${Date.now()}`;
 
@@ -19,7 +19,7 @@ beforeAll(async () => {
 
   // Create test user directly in DB
   const hashedPassword = await bcrypt.hash("Test@1234", 10);
-  const user = await UserModel.create({
+  await UserModel.create({
     email: uniqueEmail,
     password: hashedPassword,
     username: uniqueUsername,
@@ -27,13 +27,21 @@ beforeAll(async () => {
   });
 
   // Authenticate using /api/auth/login to obtain auth_token cookie
-  agent = request.agent(app);
-  const loginRes = await agent.post("/api/auth/login").send({
+  const loginRes = await request(app).post("/api/auth/login").send({
     identifier: uniqueEmail,
     password: "Test@1234",
   });
 
   expect(loginRes.status).toBe(200);
+
+  // Extract auth_token cookie from set-cookie header
+  const setCookie = loginRes.headers["set-cookie"];
+  const cookieArr = Array.isArray(setCookie) ? setCookie : setCookie ? [setCookie] : [];
+  const authCookieHeader = cookieArr.find((c: string) => c.includes("auth_token"));
+  if (!authCookieHeader) {
+    throw new Error("Login did not set auth_token cookie");
+  }
+  authCookie = authCookieHeader.split(";")[0];
 });
 
 
@@ -52,8 +60,9 @@ afterAll(async () => {
 
 describe("Update Profile Integration Tests", () => {
   test("should update profile with valid token", async () => {
-    const res = await agent
+    const res = await request(app)
       .put("/api/auth/profile")
+      .set("Cookie", authCookie)
       .send({
         fullName: "Updated Name",
       });
@@ -76,8 +85,9 @@ describe("Update Profile Integration Tests", () => {
   });
 
   test("should update email successfully", async () => {
-    const res = await agent
+    const res = await request(app)
       .put("/api/auth/profile")
+      .set("Cookie", authCookie)
       .send({
         email: `new_${uniqueEmail}`,
       });
@@ -87,8 +97,9 @@ describe("Update Profile Integration Tests", () => {
   });
 
   test("should update username successfully", async () => {
-    const res = await agent
+    const res = await request(app)
       .put("/api/auth/profile")
+      .set("Cookie", authCookie)
       .send({
         username: `new_${uniqueUsername}`,
       });

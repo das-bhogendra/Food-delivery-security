@@ -33,24 +33,19 @@ describe("Delete Food Item Integration Tests", () => {
       role: "admin",
     });
 
-    // Login to get auth cookie (authorizedMiddleware reads req.cookies.auth_token)
-    const agent = request.agent(app);
-    (globalThis as any).__foodDelAuthAgent = agent;
-
-    const loginRes = await agent.post("/api/auth/login").send({
+    // Login to get auth_token cookie
+    const loginRes = await request(app).post("/api/auth/login").send({
       identifier: uniqueEmail,
       password: "Test@1234",
     });
     expect(loginRes.status).toBe(200);
 
-    // Sanity: ensure auth_token cookie was issued
+    // Extract auth_token cookie from set-cookie header
     const setCookie = loginRes.headers["set-cookie"];
     const cookieArr = Array.isArray(setCookie) ? setCookie : setCookie ? [setCookie] : [];
-    const authCookie = cookieArr.find((c) => c.includes("auth_token"));
-    expect(authCookie).toBeDefined();
-
-    // Keep token variable only for debugging; auth relies on cookie
-    token = loginRes.body.token;
+    const authCookieHeader = cookieArr.find((c: string) => c.includes("auth_token"));
+    expect(authCookieHeader).toBeDefined();
+    token = authCookieHeader.split(";")[0];
 
     // Create a food item to delete
 
@@ -66,10 +61,9 @@ describe("Delete Food Item Integration Tests", () => {
   }, 30000);
 
   test("should delete food successfully", async () => {
-    const agent = (globalThis as any).__foodDelAuthAgent as ReturnType<typeof request.agent>;
-
-    const res = await agent
-      .delete(`/api/fooditems/${foodId}`);
+    const res = await request(app)
+      .delete(`/api/fooditems/${foodId}`)
+      .set("Cookie", token);
     expect(res.status).toBe(200);
 
     expect(res.body.message).toBe("Food item deleted successfully");

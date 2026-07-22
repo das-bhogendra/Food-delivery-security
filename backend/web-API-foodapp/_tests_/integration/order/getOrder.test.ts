@@ -5,19 +5,15 @@ import { connectionDatabase } from "../../../src/database/mongodb";
 import { UserModel } from "../../../src/models/user.model";
 import { Order } from "../../../src/models/order.model";
 import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
-import { JWT_SECRET } from "../../../src/config/config";
 
 describe("Get Order Integration Tests", () => {
   const uniqueEmail = `test_getorder_${Date.now()}@example.com`;
 
   beforeAll(async () => {
-    // Connect to database (reuse if already connected)
     await connectionDatabase();
   }, 30000);
 
   afterAll(async () => {
-    // Don't close the connection here - let Jest handle it
     try {
       const collections = Object.keys(mongoose.connection.collections);
       for (const key of collections) {
@@ -31,7 +27,7 @@ describe("Get Order Integration Tests", () => {
   }, 30000);
 
   test("should get order by ID", async () => {
-    // Create user inside the test to avoid setup.ts beforeEach clearing it
+    // Create user and login to obtain auth_token cookie
     const hashedPassword = await bcrypt.hash("Test@1234", 10);
     const user = await UserModel.create({
       email: uniqueEmail,
@@ -42,8 +38,19 @@ describe("Get Order Integration Tests", () => {
     });
     const testUserId = user._id.toString();
 
-    // Generate JWT token
-    const token = jwt.sign({ id: testUserId, role: "user" }, JWT_SECRET, { expiresIn: "7d" });
+    // Login to get auth_token cookie
+    const loginRes = await request(app).post("/api/auth/login").send({
+      identifier: uniqueEmail,
+      password: "Test@1234",
+    });
+    expect(loginRes.status).toBe(200);
+
+    // Extract auth_token cookie from set-cookie header
+    const setCookie = loginRes.headers["set-cookie"];
+    const cookieArr = Array.isArray(setCookie) ? setCookie : setCookie ? [setCookie] : [];
+    const authCookieHeader = cookieArr.find((c: string) => c.includes("auth_token"));
+    expect(authCookieHeader).toBeDefined();
+    const authCookie = authCookieHeader.split(";")[0];
 
     // Create an order
     const orderObj = new Order({
@@ -58,17 +65,18 @@ describe("Get Order Integration Tests", () => {
     // Make the request
     const res = await request(app)
       .get(`/api/orders/${orderId}`)
-      .set("Cookie", `auth_token=${token}`);
+      .set("Cookie", authCookie);
 
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
   });
 
   test("should return 404 for invalid order id", async () => {
-    // Create user inside the test to avoid setup.ts beforeEach clearing it
+    // Create user and login to obtain auth_token cookie
+    const email2 = `test_getorder_2_${Date.now()}@example.com`;
     const hashedPassword = await bcrypt.hash("Test@1234", 10);
     const user = await UserModel.create({
-      email: `test_getorder_2_${Date.now()}@example.com`,
+      email: email2,
       password: hashedPassword,
       username: `testuser_2_${Date.now()}`,
       fullName: "Test User GetOrder 2",
@@ -76,13 +84,24 @@ describe("Get Order Integration Tests", () => {
     });
     const testUserId = user._id.toString();
 
-    // Generate JWT token
-    const token = jwt.sign({ id: testUserId, role: "user" }, JWT_SECRET, { expiresIn: "7d" });
+    // Login to get auth_token cookie
+    const loginRes = await request(app).post("/api/auth/login").send({
+      identifier: email2,
+      password: "Test@1234",
+    });
+    expect(loginRes.status).toBe(200);
+
+    // Extract auth_token cookie from set-cookie header
+    const setCookie = loginRes.headers["set-cookie"];
+    const cookieArr = Array.isArray(setCookie) ? setCookie : setCookie ? [setCookie] : [];
+    const authCookieHeader = cookieArr.find((c: string) => c.includes("auth_token"));
+    expect(authCookieHeader).toBeDefined();
+    const authCookie = authCookieHeader.split(";")[0];
 
     // Make the request with invalid order ID
     const res = await request(app)
       .get("/api/orders/64abc1234567890000000000")
-      .set("Cookie", `auth_token=${token}`);
+      .set("Cookie", authCookie);
 
     expect(res.status).toBe(404);
   });

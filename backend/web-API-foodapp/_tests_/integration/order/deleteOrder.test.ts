@@ -7,7 +7,7 @@ import { Order } from "../../../src/models/order.model";
 import bcrypt from "bcryptjs";
 
 describe("Delete Order Integration Tests", () => {
-  let agent: request.Agent;
+  let authCookie: string;
   let testUserId: string;
   let orderId: string;
   const uniqueEmail = `test_deleteorder_${Date.now()}@example.com`;
@@ -34,14 +34,21 @@ describe("Delete Order Integration Tests", () => {
     });
     testUserId = user._id.toString();
 
-    // Login via agent to persist auth_token cookie
-    agent = request.agent(app);
-    const loginRes = await agent.post("/api/auth/login").send({
+    // Login to obtain auth_token cookie
+    const loginRes = await request(app).post("/api/auth/login").send({
       identifier: uniqueEmail,
       password: "Test@1234",
     });
-    // Verify login succeeded
     expect(loginRes.status).toBe(200);
+
+    // Extract auth_token cookie from set-cookie header
+    const setCookie = loginRes.headers["set-cookie"];
+    const cookieArr = Array.isArray(setCookie) ? setCookie : setCookie ? [setCookie] : [];
+    const authCookieHeader = cookieArr.find((c: string) => c.includes("auth_token"));
+    if (!authCookieHeader) {
+      throw new Error("Login did not set auth_token cookie");
+    }
+    authCookie = authCookieHeader.split(";")[0];
 
     // Create an order
     const orderObj = new Order({
@@ -66,8 +73,9 @@ describe("Delete Order Integration Tests", () => {
   }, 30000);
 
   test("should delete order successfully", async () => {
-    const res = await agent
-      .delete(`/api/orders/${orderId}`);
+    const res = await request(app)
+      .delete(`/api/orders/${orderId}`)
+      .set("Cookie", authCookie);
 
     expect(res.status).toBe(200);
     expect(res.body.message).toBe("Order deleted successfully");
