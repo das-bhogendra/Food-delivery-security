@@ -2,6 +2,7 @@ import express, { Application } from "express";
 import dotenv from "dotenv";
 import cors from "cors";
 import path from "path";
+import cookieParser from "cookie-parser";
 
 import authRoutes from "./routes/auth.route";
 import adminUserRoutes from "./routes/admin/user.routes";
@@ -19,6 +20,7 @@ app.use(cors({
 }));
 
 app.use(express.json()); // instead of bodyParser
+app.use(cookieParser());
 
 // Static
 app.use("/uploads", express.static(path.join(__dirname, "../uploads")));

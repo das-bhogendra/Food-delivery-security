@@ -60,7 +60,7 @@ export const getOrderById = async (req: Request, res: Response) => {
       return res.status(403).json({ success: false, message: "Forbidden" });
     }
 
-    res.status(200).json({ success: true, data: order });
+    res.status(200).json({ success: true, data: order }); // ✅ populated foodItems
   } catch (error: any) {
     res.status(500).json({ success: false, message: "Server Error", error: error.message });
   }
@@ -96,23 +96,15 @@ export const updateOrder = async (req: Request, res: Response) => {
   try {
     const { status } = req.body;
 
+    // Only allow updating status
     if (!status || !["pending", "confirmed", "delivered", "cancelled"].includes(status)) {
       return res.status(400).json({ success: false, message: "Invalid status" });
     }
 
-    const existingOrder = await service.getOrderById(req.params.id);
-    if (!existingOrder)
-      return res.status(404).json({ success: false, message: "Order not found" });
-
-    const requesterId = req.user?._id?.toString();
-    const orderOwnerId = (existingOrder.userId as any)?._id?.toString() || existingOrder.userId?.toString();
-    const isAdmin = req.user?.role === "admin";
-
-    if (orderOwnerId !== requesterId && !isAdmin) {
-      return res.status(403).json({ success: false, message: "Forbidden" });
-    }
-
     const order = await service.updateOrder(req.params.id, { status });
+
+    if (!order)
+      return res.status(404).json({ success: false, message: "Order not found" });
 
     res.status(200).json({
       success: true,
@@ -124,22 +116,11 @@ export const updateOrder = async (req: Request, res: Response) => {
   }
 };
 
-
 export const deleteOrder = async (req: Request, res: Response) => {
   try {
-    const existingOrder = await service.getOrderById(req.params.id);
-    if (!existingOrder)
-      return res.status(404).json({ success: false, message: "Order not found" });
-
-    const requesterId = req.user?._id?.toString();
-    const orderOwnerId = (existingOrder.userId as any)?._id?.toString() || existingOrder.userId?.toString();
-    const isAdmin = req.user?.role === "admin";
-
-    if (orderOwnerId !== requesterId && !isAdmin) {
-      return res.status(403).json({ success: false, message: "Forbidden" });
-    }
-
     const deleted = await service.deleteOrder(req.params.id);
+
+    if (!deleted) return res.status(404).json({ success: false, message: "Order not found" });
 
     res.status(200).json({ success: true, message: "Order deleted successfully" });
   } catch (error: any) {
